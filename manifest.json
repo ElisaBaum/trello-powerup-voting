@@ -1,0 +1,19 @@
+{
+  "name": "Voting",
+  "details": "",
+  "icon": {
+    "url": "./logo.png"
+  },
+  "author": "Elisa Baum",
+  "capabilities": [
+    "callback",
+    "card-badges",
+    "card-buttons",
+    "card-detail-badges"
+  ],
+  "connectors": {
+    "iframe": {
+      "url": "./build/index.html"
+    }
+  }
+}

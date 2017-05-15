@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "pretty": true,
+    "lib": ["es6", "dom"]
+  },
+  "files": ["fuse.ts"],
+  "exclude": [
+    "node_modules"
+  ]
+}

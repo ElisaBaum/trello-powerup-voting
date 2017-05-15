@@ -1,0 +1,17 @@
+
+# Intellij
+.idea/
+*.iml
+*.iws
+
+# Mac
+.DS_Store
+
+.fusebox
+
+src/**/*.js
+src/**/*.js.map
+node_modules
+
+fuse.js
+fuse.js.map
