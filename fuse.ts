@@ -14,6 +14,10 @@ const fuse = FuseBox.init({
     shim: {
         'trello-powerups': {
             exports: 'TrelloPowerUp'
+        },
+        'jquery': {
+            source: 'node_modules/jquery/dist/jquery.js',
+            exports:'$'
         }
     }
 });
@@ -21,5 +25,9 @@ const fuse = FuseBox.init({
 fuse
     .bundle('powerup-voting')
     .instructions(">powerup-voting.ts");
+
+fuse
+    .bundle('voting-results')
+    .instructions('>voting-results.ts');
 
 fuse.run();

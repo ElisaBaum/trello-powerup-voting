@@ -1,42 +1,34 @@
-import {ICardVotings} from "../interfaces/ICardVotings";
-import {IVote} from "../interfaces/IVote";
 import {VotingType} from "../enums/VotingType";
-import {votingsOnCardFilter, votingTypeFilter} from "./vote-service";
+import {getVotesOnCurrentCard, votingTypeFilter} from "./vote-service";
 import thumbsUpImg from '../images/thumbs_up_white.svg';
 import thumbsDownImg from '../images/thumbs_down_white.svg';
 import {cleanupPath} from "./asset-service";
 import {IBadge} from "../interfaces/IBadge";
+import {IVote} from "../interfaces/IVote";
+
+const badgeColor = (votingType: VotingType) => votingType === VotingType.UP ? 'green' : 'red';
+const badgeTitle = (votingType: VotingType) => votingType === VotingType.UP ? 'Ups' : 'Downs';
+const badgeIcon = (votingType: VotingType) => votingType == VotingType.UP ? cleanupPath(thumbsUpImg) : cleanupPath(thumbsDownImg);
 
 function createBadge(votes: IVote[], votingType: VotingType): IBadge | undefined {
     const numberOfVotes = votes.filter(votingTypeFilter(votingType)).length;
 
     if (numberOfVotes) {
-        const badgeIcon = votingType == VotingType.up ? cleanupPath(thumbsUpImg) : cleanupPath(thumbsDownImg);
-        const badgeColor = votingType == VotingType.up ? 'green' : 'red';
-        const badgeTitle = votingType == VotingType.up ? 'Ups' : 'Downs';
-
         return {
-            title: badgeTitle,
+            title: badgeTitle(votingType),
             text: numberOfVotes,
-            icon: badgeIcon,
-            color: badgeColor
+            icon: badgeIcon(votingType),
+            color: badgeColor(votingType)
         }
     }
 }
 
 export function getBadges(t: any) {
-    return Promise
-        .all([
-            t.get('card', 'shared', 'votings', []) as Promise<ICardVotings[]>,
-            t.card('id').get('id') as Promise<string>,
-        ])
-        .then(([votings, currentCardId]) => {
-            const existingVotingsOnCard = votings.find(votingsOnCardFilter(currentCardId));
-
-            if (existingVotingsOnCard) {
-                const upBadge = createBadge(existingVotingsOnCard.votes, VotingType.up);
-                const downBadge = createBadge(existingVotingsOnCard.votes, VotingType.down);
-
+    return getVotesOnCurrentCard(t)
+        .then((votes) => {
+            if (votes) {
+                const upBadge = createBadge(votes, VotingType.UP);
+                const downBadge = createBadge(votes, VotingType.DOWN);
                 return [upBadge, downBadge].filter(badge => !!badge);
             } else {
                 return [];

@@ -5,4 +5,5 @@ declare module 'trello-powerups' {
     }
 
     export function initialize(options: ITrelloPowerUpsInitializeOptions);
+    export function iframe();
 }

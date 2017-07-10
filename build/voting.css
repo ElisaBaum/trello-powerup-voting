@@ -1,0 +1,20 @@
+.voting-result-icon {
+    border-radius: 3px;
+    vertical-align: middle;
+    display: inline-block;
+    margin: 0 2px 2px 0;
+    padding: 1px 2px;
+    background-repeat: no-repeat;
+    background-size: 16px;
+    background-position: 3px 2px;
+    height: 18px;
+    width: 18px;
+}
+
+.icon-green {
+    background-color: #61BD4F;
+}
+
+.icon-red {
+    background-color: #CF513D;
+}

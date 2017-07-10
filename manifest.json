@@ -6,6 +6,7 @@
   },
   "author": "Elisa Baum",
   "capabilities": [
+    "attachment-sections",
     "callback",
     "card-badges",
     "card-buttons",

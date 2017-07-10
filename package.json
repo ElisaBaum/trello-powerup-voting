@@ -1,12 +1,14 @@
 {
   "name": "powerup-voting",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
   "main": "index.js",
   "dependencies": {},
   "devDependencies": {
+    "@types/jquery": "^2.0.45",
     "@types/node": "^7.0.18",
     "fuse-box": "^2.0.0",
+    "jquery": "^3.2.1",
     "typescript": "^2.3.2"
   },
   "scripts": {
@@ -17,7 +19,7 @@
     "type": "git",
     "url": "git+https://github.com/ElisaBaum/trello-powerup-voting.git"
   },
-  "author": "",
+  "author": "Elisa Baum",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/ElisaBaum/trello-powerup-voting/issues"
