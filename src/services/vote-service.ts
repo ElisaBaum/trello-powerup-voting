@@ -60,3 +60,26 @@ export function vote(t: any, currentVotingType: VotingType) {
             t.set('card', 'shared', 'votings', votings);
         });
 }
+
+export function deleteVote(t: any) {
+    return Promise
+    .all([
+        t.get('card', 'shared', 'votings', []) as Promise<ICardVotings[]>,
+        t.card('id').get('id') as Promise<string>,
+        t.member('id').get('id') as Promise<string>
+    ])
+    .then(([votings, currentCardId, currentMemberId]) => {
+        const existingVotingsOnCard = votings.find(votingsOnCardFilter(currentCardId));
+
+        if (existingVotingsOnCard) {
+            const votes = existingVotingsOnCard.votes;
+            const existingVoteForMember = votes.find(votesForMemberFilter(currentMemberId));
+
+            if (existingVoteForMember) {
+                existingVotingsOnCard.votes = votes.slice(votes.indexOf(existingVoteForMember) -1, 1);
+            }
+        }
+        t.set('card', 'shared', 'votings', votings);
+    });
+
+}

@@ -134,6 +134,27 @@ function vote(t, currentVotingType) {
     });
 }
 exports.vote = vote;
+function deleteVote(t) {
+    return Promise
+        .all([
+        t.get('card', 'shared', 'votings', []),
+        t.card('id').get('id'),
+        t.member('id').get('id')
+    ])
+        .then(function (_a) {
+        var votings = _a[0], currentCardId = _a[1], currentMemberId = _a[2];
+        var existingVotingsOnCard = votings.find(exports.votingsOnCardFilter(currentCardId));
+        if (existingVotingsOnCard) {
+            var votes = existingVotingsOnCard.votes;
+            var existingVoteForMember = votes.find(exports.votesForMemberFilter(currentMemberId));
+            if (existingVoteForMember) {
+                existingVotingsOnCard.votes = votes.slice(votes.indexOf(existingVoteForMember) - 1, 1);
+            }
+        }
+        t.set('card', 'shared', 'votings', votings);
+    });
+}
+exports.deleteVote = deleteVote;
 //# sourceMappingURL=vote-service.js.map
 });
 ___scope___.file("images/thumbs_up_white.svg", function(exports, require, module, __filename, __dirname){
@@ -162,6 +183,7 @@ var vote_service_1 = require("./vote-service");
 var VotingType_1 = require("../enums/VotingType");
 var thumbs_up_svg_1 = require("../images/thumbs_up.svg");
 var thumbs_down_svg_1 = require("../images/thumbs_down.svg");
+var trash_svg_1 = require("../images/trash.svg");
 var asset_service_1 = require("./asset-service");
 var voteUpButton = {
     icon: asset_service_1.cleanupPath(thumbs_up_svg_1.default),
@@ -172,9 +194,16 @@ var voteUpButton = {
 };
 var voteDownButton = {
     icon: asset_service_1.cleanupPath(thumbs_down_svg_1.default),
-    text: 'Vote down',
+    text: '\u200B' + 'Vote down',
     callback: function (t) {
         return vote_service_1.vote(t, VotingType_1.VotingType.down).then(t.closePopup());
+    }
+};
+var deleteVoteButton = {
+    icon: asset_service_1.cleanupPath(trash_svg_1.default),
+    text: '\u2063' + 'Delete vote',
+    callback: function (t) {
+        return vote_service_1.deleteVote(t).then(t.closePopup());
     }
 };
 function getCardButtons(t) {
@@ -185,10 +214,12 @@ function getCardButtons(t) {
             switch (vote.votingType) {
                 case VotingType_1.VotingType.up: {
                     buttons.push(voteDownButton);
+                    buttons.push(deleteVoteButton);
                     break;
                 }
                 case VotingType_1.VotingType.down: {
                     buttons.push(voteUpButton);
+                    buttons.push(deleteVoteButton);
                     break;
                 }
             }
@@ -210,6 +241,10 @@ module.exports.default = "/assets/1ff84e9d-thumbs_up.svg";
 ___scope___.file("images/thumbs_down.svg", function(exports, require, module, __filename, __dirname){
 
 module.exports.default = "/assets/927da82a-thumbs_down.svg";
+});
+___scope___.file("images/trash.svg", function(exports, require, module, __filename, __dirname){
+
+module.exports.default = "/assets/e36a768e-trash.svg";
 });
 });
 FuseBox.pkg("trello-powerups", {}, function(___scope___){
