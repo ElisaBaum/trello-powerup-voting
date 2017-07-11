@@ -10410,6 +10410,27 @@ function vote(t, currentVotingType) {
     });
 }
 exports.vote = vote;
+function deleteVote(t) {
+    return Promise
+        .all([
+        t.get('card', 'shared', 'votings', []),
+        t.card('id').get('id'),
+        t.member('id').get('id')
+    ])
+        .then(function (_a) {
+        var votings = _a[0], currentCardId = _a[1], currentMemberId = _a[2];
+        var existingVotingsOnCard = votings.find(votingsOnCardFilter(currentCardId));
+        if (existingVotingsOnCard) {
+            var votes = existingVotingsOnCard.votes;
+            var existingVoteForMember = votes.find(votesForMemberFilter(currentMemberId));
+            if (existingVoteForMember) {
+                votes.splice(votes.indexOf(existingVoteForMember), 1);
+            }
+        }
+        t.set('card', 'shared', 'votings', votings);
+    });
+}
+exports.deleteVote = deleteVote;
 function getVotingResults(t) {
     return Promise
         .all([

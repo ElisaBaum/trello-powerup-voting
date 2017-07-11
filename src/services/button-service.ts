@@ -1,7 +1,8 @@
-import {getVotesOnCurrentCardForCurrentMember, vote} from "./vote-service";
+import {getVotesOnCurrentCardForCurrentMember, vote, deleteVote} from "./vote-service";
 import {VotingType} from "../enums/VotingType";
 import thumbsUpImg from '../images/thumbs_up.svg';
 import thumbsDownImg from "../images/thumbs_down.svg";
+import trashImg from "../images/trash.svg";
 import {cleanupPath} from "./asset-service";
 import {IButton} from "../interfaces/IButton";
 import {attachResults} from "./attachment-service";
@@ -16,9 +17,19 @@ const voteUpButton: IButton = {
 
 const voteDownButton: IButton = {
     icon: cleanupPath(thumbsDownImg),
-    text: 'Vote DOWN',
+    // hacky workaround to sort in correct order
+    text: '\u200B' + 'Vote DOWN',
     callback(t) {
         return vote(t, VotingType.DOWN).then(t.closePopup());
+    }
+};
+
+const deleteVoteButton: IButton = {
+    icon: cleanupPath(trashImg),
+    // hacky workaround to sort in correct order
+    text: '\u2063' + 'Delete vote',
+    callback(t) {
+        return deleteVote(t).then(t.closePopup());
     }
 };
 
@@ -29,8 +40,10 @@ export function getCardButtons(t) {
 
             if (vote && vote.votingType === VotingType.UP) {
                 buttons.push(voteDownButton);
+                buttons.push(deleteVoteButton);
             } else if (vote && vote.votingType === VotingType.DOWN) {
                 buttons.push(voteUpButton);
+                buttons.push(deleteVoteButton);
             } else {
                 buttons.push(voteUpButton);
                 buttons.push(voteDownButton);

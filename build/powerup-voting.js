@@ -10443,6 +10443,27 @@ function vote(t, currentVotingType) {
     });
 }
 exports.vote = vote;
+function deleteVote(t) {
+    return Promise
+        .all([
+        t.get('card', 'shared', 'votings', []),
+        t.card('id').get('id'),
+        t.member('id').get('id')
+    ])
+        .then(function (_a) {
+        var votings = _a[0], currentCardId = _a[1], currentMemberId = _a[2];
+        var existingVotingsOnCard = votings.find(votingsOnCardFilter(currentCardId));
+        if (existingVotingsOnCard) {
+            var votes = existingVotingsOnCard.votes;
+            var existingVoteForMember = votes.find(votesForMemberFilter(currentMemberId));
+            if (existingVoteForMember) {
+                votes.splice(votes.indexOf(existingVoteForMember), 1);
+            }
+        }
+        t.set('card', 'shared', 'votings', votings);
+    });
+}
+exports.deleteVote = deleteVote;
 function getVotingResults(t) {
     return Promise
         .all([
@@ -10493,6 +10514,7 @@ var vote_service_1 = require("./vote-service");
 var VotingType_1 = require("../enums/VotingType");
 var thumbs_up_svg_1 = require("../images/thumbs_up.svg");
 var thumbs_down_svg_1 = require("../images/thumbs_down.svg");
+var trash_svg_1 = require("../images/trash.svg");
 var asset_service_1 = require("./asset-service");
 var attachment_service_1 = require("./attachment-service");
 var voteUpButton = {
@@ -10504,9 +10526,18 @@ var voteUpButton = {
 };
 var voteDownButton = {
     icon: asset_service_1.cleanupPath(thumbs_down_svg_1.default),
-    text: 'Vote DOWN',
+    // hacky workaround to sort in correct order
+    text: '\u200B' + 'Vote DOWN',
     callback: function (t) {
         return vote_service_1.vote(t, VotingType_1.VotingType.DOWN).then(t.closePopup());
+    }
+};
+var deleteVoteButton = {
+    icon: asset_service_1.cleanupPath(trash_svg_1.default),
+    // hacky workaround to sort in correct order
+    text: '\u2063' + 'Delete vote',
+    callback: function (t) {
+        return vote_service_1.deleteVote(t).then(t.closePopup());
     }
 };
 function getCardButtons(t) {
@@ -10515,9 +10546,11 @@ function getCardButtons(t) {
         var buttons = [];
         if (vote && vote.votingType === VotingType_1.VotingType.UP) {
             buttons.push(voteDownButton);
+            buttons.push(deleteVoteButton);
         }
         else if (vote && vote.votingType === VotingType_1.VotingType.DOWN) {
             buttons.push(voteUpButton);
+            buttons.push(deleteVoteButton);
         }
         else {
             buttons.push(voteUpButton);
@@ -10538,6 +10571,10 @@ module.exports.default = "/assets/1ff84e9d-thumbs_up.svg";
 ___scope___.file("images/thumbs_down.svg", function(exports, require, module, __filename, __dirname){
 
 module.exports.default = "/assets/927da82a-thumbs_down.svg";
+});
+___scope___.file("images/trash.svg", function(exports, require, module, __filename, __dirname){
+
+module.exports.default = "/assets/e36a768e-trash.svg";
 });
 ___scope___.file("services/attachment-service.js", function(exports, require, module, __filename, __dirname){
 
