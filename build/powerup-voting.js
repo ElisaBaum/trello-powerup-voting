@@ -148,7 +148,7 @@ function deleteVote(t) {
             var votes = existingVotingsOnCard.votes;
             var existingVoteForMember = votes.find(exports.votesForMemberFilter(currentMemberId));
             if (existingVoteForMember) {
-                existingVotingsOnCard.votes = votes.slice(votes.indexOf(existingVoteForMember) - 1, 1);
+                votes.splice(votes.indexOf(existingVoteForMember), 1);
             }
         }
         t.set('card', 'shared', 'votings', votings);

@@ -76,7 +76,7 @@ export function deleteVote(t: any) {
             const existingVoteForMember = votes.find(votesForMemberFilter(currentMemberId));
 
             if (existingVoteForMember) {
-                existingVotingsOnCard.votes = votes.slice(votes.indexOf(existingVoteForMember) -1, 1);
+                votes.splice(votes.indexOf(existingVoteForMember), 1);
             }
         }
         t.set('card', 'shared', 'votings', votings);
