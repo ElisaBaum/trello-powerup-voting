@@ -194,6 +194,7 @@ var voteUpButton = {
 };
 var voteDownButton = {
     icon: asset_service_1.cleanupPath(thumbs_down_svg_1.default),
+    // hacky workaround to sort in correct order
     text: '\u200B' + 'Vote down',
     callback: function (t) {
         return vote_service_1.vote(t, VotingType_1.VotingType.down).then(t.closePopup());
@@ -201,6 +202,7 @@ var voteDownButton = {
 };
 var deleteVoteButton = {
     icon: asset_service_1.cleanupPath(trash_svg_1.default),
+    // hacky workaround to sort in correct order
     text: '\u2063' + 'Delete vote',
     callback: function (t) {
         return vote_service_1.deleteVote(t).then(t.closePopup());

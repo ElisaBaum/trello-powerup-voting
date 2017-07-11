@@ -16,6 +16,7 @@ const voteUpButton: IButton = {
 
 const voteDownButton: IButton = {
     icon: cleanupPath(thumbsDownImg),
+    // hacky workaround to sort in correct order
     text: '\u200B' + 'Vote down',
     callback(t) {
         return vote(t, VotingType.down).then(t.closePopup());
@@ -24,6 +25,7 @@ const voteDownButton: IButton = {
 
 const deleteVoteButton: IButton = {
     icon: cleanupPath(trashImg),
+    // hacky workaround to sort in correct order
     text: '\u2063' + 'Delete vote',
     callback(t) {
         return deleteVote(t).then(t.closePopup());
