@@ -10265,8 +10265,10 @@ var thumbs_down_white_svg_1 = require("./images/thumbs_down_white.svg");
 var asset_service_1 = require("./services/asset-service");
 var upVotesSelector = $('#upVoters');
 var upVotesIconSelector = $('#upVotesIcon');
+var upVotesResult = $('#upVotesResult');
 var downVotesSelector = $('#downVoters');
 var downVotesIconSelector = $('#downVotesIcon');
+var downVotesResult = $('#downVotesResult');
 var t = trello_powerups_1.iframe();
 var membersWithFullNameFilter = function (member) { return member.fullName !== undefined; };
 function votingResultText(voteAnonymously, voters) {
@@ -10282,10 +10284,22 @@ t.render(function () {
     vote_service_1.getVotingResults(t)
         .then(function (results) {
         if (results) {
-            upVotesSelector.text(votingResultText(results.voteAnonymously, results.upVoters));
-            upVotesIconSelector.css('background-image', votingResultIcon(thumbs_up_white_svg_1.default));
-            downVotesSelector.text(votingResultText(results.voteAnonymously, results.downVoters));
-            downVotesIconSelector.css('background-image', votingResultIcon(thumbs_down_white_svg_1.default));
+            if (results.upVoters.length) {
+                upVotesSelector.text(votingResultText(results.voteAnonymously, results.upVoters));
+                upVotesIconSelector.css('background-image', votingResultIcon(thumbs_up_white_svg_1.default));
+                upVotesResult.css('display', 'block');
+            }
+            else {
+                upVotesResult.css('display', 'none');
+            }
+            if (results.downVoters.length) {
+                downVotesSelector.text(votingResultText(results.voteAnonymously, results.downVoters));
+                downVotesIconSelector.css('background-image', votingResultIcon(thumbs_down_white_svg_1.default));
+                downVotesResult.css('display', 'block');
+            }
+            else {
+                downVotesResult.css('display', 'none');
+            }
         }
     })
         .then(function () { return t.sizeTo('#votingResults'); });
@@ -10297,12 +10311,15 @@ ___scope___.file("services/vote-service.js", function(exports, require, module, 
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var VotingType_1 = require("../enums/VotingType");
+var votings = function (t) { return t.get('card', 'shared', 'votings', []); };
+var card = function (t) { return t.card('id'); };
+var member = function (t) { return t.member('id', 'username', 'fullName', 'avatar'); };
+var settings = function (t) { return t.get('board', 'shared', 'voteAnonymously', { voteAnonymously: true }); };
+var votingsOnCardFilter = function (currentCardId) { return function (votings) { return votings.cardId === currentCardId; }; };
+var votesForMemberFilter = function (currentMemberId) { return function (vote) { return vote.member.id === currentMemberId; }; };
 function isAnonymous(vote) {
     return vote.memberId !== undefined;
 }
-var votesForMemberFilter = function (currentMemberId) { return function (vote) {
-    return isAnonymous(vote) ? vote.memberId === currentMemberId : vote.member.id === currentMemberId;
-}; };
 var voteConverter = function (vote) {
     if (isAnonymous(vote)) {
         return {
@@ -10314,26 +10331,16 @@ var voteConverter = function (vote) {
         return vote;
     }
 };
-var votingsOnCardFilter = function (currentCardId) { return function (votings) { return votings.cardId === currentCardId; }; };
 function getVotesOnCard(votings, currentCardId) {
     var existingVotesOnCard = votings.find(votingsOnCardFilter(currentCardId));
     if (existingVotesOnCard) {
         return existingVotesOnCard.votes.map(voteConverter);
     }
 }
-function getVotesOnCardForMember(votings, currentCardId, currentMemberId) {
-    var votesOnCard = getVotesOnCard(votings, currentCardId);
-    if (votesOnCard) {
-        return votesOnCard.find(votesForMemberFilter(currentMemberId));
-    }
-}
 function updateVote(votes, currentMember, currentVotingType) {
     var existingVoteForMember = votes.find(votesForMemberFilter(currentMember.id));
     if (existingVoteForMember) {
         if (isAnonymous(existingVoteForMember)) {
-            // todo
-            console.log(votes);
-            console.log('index: ' + votes.indexOf(existingVoteForMember));
             // remove old vote
             votes.splice(votes.indexOf(existingVoteForMember), 1);
             // create and add new vote
@@ -10356,50 +10363,39 @@ function updateVote(votes, currentMember, currentVotingType) {
 }
 exports.votingTypeFilter = function (currentVotingType) { return function (vote) { return vote.votingType === currentVotingType; }; };
 function getVotesOnCurrentCard(t) {
-    return Promise
-        .all([
-        t.get('card', 'shared', 'votings', []),
-        t.card('id').get('id'),
-    ])
+    return Promise.all([votings(t), card(t)])
         .then(function (_a) {
-        var votings = _a[0], currentCardId = _a[1];
-        return getVotesOnCard(votings, currentCardId);
+        var votings = _a[0], currentCard = _a[1];
+        return getVotesOnCard(votings, currentCard.id);
     });
 }
 exports.getVotesOnCurrentCard = getVotesOnCurrentCard;
 function getVotesOnCurrentCardForCurrentMember(t) {
-    return Promise
-        .all([
-        t.get('card', 'shared', 'votings', []),
-        t.card('id').get('id'),
-        t.member('id').get('id')
-    ])
+    return Promise.all([votings(t), card(t), member(t)])
         .then(function (_a) {
-        var votings = _a[0], currentCardId = _a[1], currentMemberId = _a[2];
-        return getVotesOnCardForMember(votings, currentCardId, currentMemberId);
+        var votings = _a[0], currentCard = _a[1], currentMember = _a[2];
+        var votesOnCard = getVotesOnCard(votings, currentCard.id);
+        if (votesOnCard) {
+            return votesOnCard.find(votesForMemberFilter(currentMember.id));
+        }
     });
 }
 exports.getVotesOnCurrentCardForCurrentMember = getVotesOnCurrentCardForCurrentMember;
 function vote(t, currentVotingType) {
-    return Promise
-        .all([
-        t.get('card', 'shared', 'votings', []),
-        t.card('id').get('id'),
-        t.member('id', 'username', 'fullName', 'avatar'),
-        t.get('board', 'shared', 'voteAnonymously', true)
-    ])
+    return Promise.all([votings(t), card(t), member(t), settings(t)])
         .then(function (_a) {
-        var votings = _a[0], currentCardId = _a[1], currentMember = _a[2], voteAnonymously = _a[3];
-        var votesOnCard = getVotesOnCard(votings, currentCardId);
-        if (voteAnonymously) {
-            currentMember.fullName = undefined;
+        var votings = _a[0], currentCard = _a[1], currentMember = _a[2], settings = _a[3];
+        var votingsOnCard = votings.find(votingsOnCardFilter(currentCard.id));
+        if (settings.voteAnonymously) {
+            // anonymize member
+            currentMember = { id: currentMember.id };
         }
-        if (votesOnCard) {
-            updateVote(votesOnCard, currentMember, currentVotingType);
+        if (votingsOnCard) {
+            updateVote(votingsOnCard.votes, currentMember, currentVotingType);
         }
         else {
             votings.push({
-                cardId: currentCardId,
+                cardId: currentCard.id,
                 votes: [{
                         member: currentMember,
                         votingType: currentVotingType
@@ -10411,43 +10407,33 @@ function vote(t, currentVotingType) {
 }
 exports.vote = vote;
 function deleteVote(t) {
-    return Promise
-        .all([
-        t.get('card', 'shared', 'votings', []),
-        t.card('id').get('id'),
-        t.member('id').get('id')
-    ])
+    return Promise.all([votings(t), card(t), member(t)])
         .then(function (_a) {
-        var votings = _a[0], currentCardId = _a[1], currentMemberId = _a[2];
-        var existingVotingsOnCard = votings.find(votingsOnCardFilter(currentCardId));
-        if (existingVotingsOnCard) {
-            var votes = existingVotingsOnCard.votes;
-            var existingVoteForMember = votes.find(votesForMemberFilter(currentMemberId));
+        var votings = _a[0], currentCard = _a[1], currentMember = _a[2];
+        var votingsOnCard = votings.find(votingsOnCardFilter(currentCard.id));
+        if (votingsOnCard) {
+            var votes = votingsOnCard.votes;
+            var existingVoteForMember = votes.find(votesForMemberFilter(currentMember.id));
             if (existingVoteForMember) {
                 votes.splice(votes.indexOf(existingVoteForMember), 1);
+                t.set('card', 'shared', 'votings', votings);
             }
         }
-        t.set('card', 'shared', 'votings', votings);
     });
 }
 exports.deleteVote = deleteVote;
 function getVotingResults(t) {
-    return Promise
-        .all([
-        t.get('card', 'shared', 'votings', []),
-        t.get('board', 'shared', 'voteAnonymously', true),
-        t.card('id').get('id'),
-    ])
+    return Promise.all([votings(t), card(t), settings(t)])
         .then(function (_a) {
-        var votings = _a[0], voteAnonymously = _a[1], currentCardId = _a[2];
-        var votes = getVotesOnCard(votings, currentCardId);
+        var votings = _a[0], currentCard = _a[1], settings = _a[2];
+        var votes = getVotesOnCard(votings, currentCard.id);
         if (votes) {
-            var upVotes = votes.filter(exports.votingTypeFilter(VotingType_1.VotingType.UP)).map(function (vote) { return vote.member; });
-            var downVotes = votes.filter(exports.votingTypeFilter(VotingType_1.VotingType.DOWN)).map(function (vote) { return vote.member; });
+            var upVoters = votes.filter(exports.votingTypeFilter(VotingType_1.VotingType.UP)).map(function (vote) { return vote.member; });
+            var downVoters = votes.filter(exports.votingTypeFilter(VotingType_1.VotingType.DOWN)).map(function (vote) { return vote.member; });
             return {
-                voteAnonymously: voteAnonymously,
-                upVoters: upVotes,
-                downVoters: downVotes
+                voteAnonymously: settings.voteAnonymously,
+                upVoters: upVoters,
+                downVoters: downVoters
             };
         }
     });

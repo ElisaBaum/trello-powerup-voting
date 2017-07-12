@@ -10330,12 +10330,15 @@ ___scope___.file("services/vote-service.js", function(exports, require, module, 
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var VotingType_1 = require("../enums/VotingType");
+var votings = function (t) { return t.get('card', 'shared', 'votings', []); };
+var card = function (t) { return t.card('id'); };
+var member = function (t) { return t.member('id', 'username', 'fullName', 'avatar'); };
+var settings = function (t) { return t.get('board', 'shared', 'voteAnonymously', { voteAnonymously: true }); };
+var votingsOnCardFilter = function (currentCardId) { return function (votings) { return votings.cardId === currentCardId; }; };
+var votesForMemberFilter = function (currentMemberId) { return function (vote) { return vote.member.id === currentMemberId; }; };
 function isAnonymous(vote) {
     return vote.memberId !== undefined;
 }
-var votesForMemberFilter = function (currentMemberId) { return function (vote) {
-    return isAnonymous(vote) ? vote.memberId === currentMemberId : vote.member.id === currentMemberId;
-}; };
 var voteConverter = function (vote) {
     if (isAnonymous(vote)) {
         return {
@@ -10347,26 +10350,16 @@ var voteConverter = function (vote) {
         return vote;
     }
 };
-var votingsOnCardFilter = function (currentCardId) { return function (votings) { return votings.cardId === currentCardId; }; };
 function getVotesOnCard(votings, currentCardId) {
     var existingVotesOnCard = votings.find(votingsOnCardFilter(currentCardId));
     if (existingVotesOnCard) {
         return existingVotesOnCard.votes.map(voteConverter);
     }
 }
-function getVotesOnCardForMember(votings, currentCardId, currentMemberId) {
-    var votesOnCard = getVotesOnCard(votings, currentCardId);
-    if (votesOnCard) {
-        return votesOnCard.find(votesForMemberFilter(currentMemberId));
-    }
-}
 function updateVote(votes, currentMember, currentVotingType) {
     var existingVoteForMember = votes.find(votesForMemberFilter(currentMember.id));
     if (existingVoteForMember) {
         if (isAnonymous(existingVoteForMember)) {
-            // todo
-            console.log(votes);
-            console.log('index: ' + votes.indexOf(existingVoteForMember));
             // remove old vote
             votes.splice(votes.indexOf(existingVoteForMember), 1);
             // create and add new vote
@@ -10389,50 +10382,39 @@ function updateVote(votes, currentMember, currentVotingType) {
 }
 exports.votingTypeFilter = function (currentVotingType) { return function (vote) { return vote.votingType === currentVotingType; }; };
 function getVotesOnCurrentCard(t) {
-    return Promise
-        .all([
-        t.get('card', 'shared', 'votings', []),
-        t.card('id').get('id'),
-    ])
+    return Promise.all([votings(t), card(t)])
         .then(function (_a) {
-        var votings = _a[0], currentCardId = _a[1];
-        return getVotesOnCard(votings, currentCardId);
+        var votings = _a[0], currentCard = _a[1];
+        return getVotesOnCard(votings, currentCard.id);
     });
 }
 exports.getVotesOnCurrentCard = getVotesOnCurrentCard;
 function getVotesOnCurrentCardForCurrentMember(t) {
-    return Promise
-        .all([
-        t.get('card', 'shared', 'votings', []),
-        t.card('id').get('id'),
-        t.member('id').get('id')
-    ])
+    return Promise.all([votings(t), card(t), member(t)])
         .then(function (_a) {
-        var votings = _a[0], currentCardId = _a[1], currentMemberId = _a[2];
-        return getVotesOnCardForMember(votings, currentCardId, currentMemberId);
+        var votings = _a[0], currentCard = _a[1], currentMember = _a[2];
+        var votesOnCard = getVotesOnCard(votings, currentCard.id);
+        if (votesOnCard) {
+            return votesOnCard.find(votesForMemberFilter(currentMember.id));
+        }
     });
 }
 exports.getVotesOnCurrentCardForCurrentMember = getVotesOnCurrentCardForCurrentMember;
 function vote(t, currentVotingType) {
-    return Promise
-        .all([
-        t.get('card', 'shared', 'votings', []),
-        t.card('id').get('id'),
-        t.member('id', 'username', 'fullName', 'avatar'),
-        t.get('board', 'shared', 'voteAnonymously', true)
-    ])
+    return Promise.all([votings(t), card(t), member(t), settings(t)])
         .then(function (_a) {
-        var votings = _a[0], currentCardId = _a[1], currentMember = _a[2], voteAnonymously = _a[3];
-        var votesOnCard = getVotesOnCard(votings, currentCardId);
-        if (voteAnonymously) {
-            currentMember.fullName = undefined;
+        var votings = _a[0], currentCard = _a[1], currentMember = _a[2], settings = _a[3];
+        var votingsOnCard = votings.find(votingsOnCardFilter(currentCard.id));
+        if (settings.voteAnonymously) {
+            // anonymize member
+            currentMember = { id: currentMember.id };
         }
-        if (votesOnCard) {
-            updateVote(votesOnCard, currentMember, currentVotingType);
+        if (votingsOnCard) {
+            updateVote(votingsOnCard.votes, currentMember, currentVotingType);
         }
         else {
             votings.push({
-                cardId: currentCardId,
+                cardId: currentCard.id,
                 votes: [{
                         member: currentMember,
                         votingType: currentVotingType
@@ -10444,43 +10426,33 @@ function vote(t, currentVotingType) {
 }
 exports.vote = vote;
 function deleteVote(t) {
-    return Promise
-        .all([
-        t.get('card', 'shared', 'votings', []),
-        t.card('id').get('id'),
-        t.member('id').get('id')
-    ])
+    return Promise.all([votings(t), card(t), member(t)])
         .then(function (_a) {
-        var votings = _a[0], currentCardId = _a[1], currentMemberId = _a[2];
-        var existingVotingsOnCard = votings.find(votingsOnCardFilter(currentCardId));
-        if (existingVotingsOnCard) {
-            var votes = existingVotingsOnCard.votes;
-            var existingVoteForMember = votes.find(votesForMemberFilter(currentMemberId));
+        var votings = _a[0], currentCard = _a[1], currentMember = _a[2];
+        var votingsOnCard = votings.find(votingsOnCardFilter(currentCard.id));
+        if (votingsOnCard) {
+            var votes = votingsOnCard.votes;
+            var existingVoteForMember = votes.find(votesForMemberFilter(currentMember.id));
             if (existingVoteForMember) {
                 votes.splice(votes.indexOf(existingVoteForMember), 1);
+                t.set('card', 'shared', 'votings', votings);
             }
         }
-        t.set('card', 'shared', 'votings', votings);
     });
 }
 exports.deleteVote = deleteVote;
 function getVotingResults(t) {
-    return Promise
-        .all([
-        t.get('card', 'shared', 'votings', []),
-        t.get('board', 'shared', 'voteAnonymously', true),
-        t.card('id').get('id'),
-    ])
+    return Promise.all([votings(t), card(t), settings(t)])
         .then(function (_a) {
-        var votings = _a[0], voteAnonymously = _a[1], currentCardId = _a[2];
-        var votes = getVotesOnCard(votings, currentCardId);
+        var votings = _a[0], currentCard = _a[1], settings = _a[2];
+        var votes = getVotesOnCard(votings, currentCard.id);
         if (votes) {
-            var upVotes = votes.filter(exports.votingTypeFilter(VotingType_1.VotingType.UP)).map(function (vote) { return vote.member; });
-            var downVotes = votes.filter(exports.votingTypeFilter(VotingType_1.VotingType.DOWN)).map(function (vote) { return vote.member; });
+            var upVoters = votes.filter(exports.votingTypeFilter(VotingType_1.VotingType.UP)).map(function (vote) { return vote.member; });
+            var downVoters = votes.filter(exports.votingTypeFilter(VotingType_1.VotingType.DOWN)).map(function (vote) { return vote.member; });
             return {
-                voteAnonymously: voteAnonymously,
-                upVoters: upVotes,
-                downVoters: downVotes
+                voteAnonymously: settings.voteAnonymously,
+                upVoters: upVoters,
+                downVoters: downVoters
             };
         }
     });
@@ -10521,7 +10493,7 @@ var voteUpButton = {
     icon: asset_service_1.cleanupPath(thumbs_up_svg_1.default),
     text: 'Vote UP',
     callback: function (t) {
-        return vote_service_1.vote(t, VotingType_1.VotingType.UP).then(t.closePopup());
+        vote_service_1.vote(t, VotingType_1.VotingType.UP).then(t.closePopup());
     }
 };
 var voteDownButton = {
@@ -10529,7 +10501,7 @@ var voteDownButton = {
     // hacky workaround to sort in correct order
     text: '\u200B' + 'Vote DOWN',
     callback: function (t) {
-        return vote_service_1.vote(t, VotingType_1.VotingType.DOWN).then(t.closePopup());
+        vote_service_1.vote(t, VotingType_1.VotingType.DOWN).then(t.closePopup());
     }
 };
 var deleteVoteButton = {
@@ -10537,7 +10509,7 @@ var deleteVoteButton = {
     // hacky workaround to sort in correct order
     text: '\u2063' + 'Delete vote',
     callback: function (t) {
-        return vote_service_1.deleteVote(t).then(t.closePopup());
+        vote_service_1.deleteVote(t).then(t.closePopup());
     }
 };
 function getCardButtons(t) {
@@ -10582,26 +10554,37 @@ ___scope___.file("services/attachment-service.js", function(exports, require, mo
 Object.defineProperty(exports, "__esModule", { value: true });
 var thumbs_up_svg_1 = require("../images/thumbs_up.svg");
 var asset_service_1 = require("./asset-service");
+var vote_service_1 = require("./vote-service");
 var resultsAttachment = {
     name: "Voting Results",
+    // todo bessere url?
     url: "/results.html"
 };
 function getAttachmentSections(t, options) {
-    var claimed = options.entries.filter(function (attachment) { return attachment.url.includes(resultsAttachment.url); });
-    return [{
-            icon: asset_service_1.cleanupPath(thumbs_up_svg_1.default),
-            title: resultsAttachment.name,
-            claimed: claimed,
-            content: {
-                type: 'iframe',
-                url: t.signUrl("./results.html")
-            }
-        }];
+    return vote_service_1.getVotesOnCurrentCard(t)
+        .then(function (votes) {
+        if (votes) {
+            var claimed = options.entries.filter(function (attachment) { return attachment.url.includes(resultsAttachment.url); });
+            return [{
+                    icon: asset_service_1.cleanupPath(thumbs_up_svg_1.default),
+                    title: resultsAttachment.name,
+                    claimed: claimed,
+                    content: {
+                        type: 'iframe',
+                        url: t.signUrl("./results.html")
+                    }
+                }];
+        }
+        else {
+            return [];
+        }
+    });
 }
 exports.getAttachmentSections = getAttachmentSections;
 function attachResults(t) {
     t.card('attachments')
         .then(function (attachments) {
+        // todo include ist nicht so gut
         var existentAttachment = attachments.attachments
             .find(function (currentAttachment) { return currentAttachment.url.includes(resultsAttachment.url); });
         if (!existentAttachment) {

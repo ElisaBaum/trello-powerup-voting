@@ -3,13 +3,20 @@ import {VotingType} from "../enums/VotingType";
 import {IVotingResults} from "../interfaces/IVotingResults";
 import {IMember} from "../interfaces/IMember";
 import {IVote, IVoteAnonymous} from "../interfaces/IVote";
+import {ICard} from "../interfaces/ICard";
+import {ISettings} from "../interfaces/ISettings";
+
+const votings = (t: any) => t.get('card', 'shared', 'votings', []) as Promise<ICardVotings[]>;
+const card = (t: any) => t.card('id') as Promise<ICard>;
+const member = (t: any) => t.member('id', 'username', 'fullName', 'avatar') as Promise<IMember>;
+const settings = (t: any) => t.get('board', 'shared', 'voteAnonymously', {voteAnonymously: true}) as Promise<ISettings>;
+
+const votingsOnCardFilter = (currentCardId: string) => (votings: ICardVotings) => votings.cardId === currentCardId;
+const votesForMemberFilter = (currentMemberId: string) => (vote: IVote) => vote.member.id === currentMemberId;
 
 function isAnonymous(vote: IVote | IVoteAnonymous): vote is IVoteAnonymous {
     return (<IVoteAnonymous>vote).memberId !== undefined;
 }
-
-const votesForMemberFilter = (currentMemberId: string) => (vote: IVote | IVoteAnonymous) =>
-    isAnonymous(vote) ? vote.memberId === currentMemberId : vote.member.id === currentMemberId;
 
 const voteConverter = (vote: IVote | IVoteAnonymous): IVote => {
     if (isAnonymous(vote)) {
@@ -22,9 +29,7 @@ const voteConverter = (vote: IVote | IVoteAnonymous): IVote => {
     }
 };
 
-const votingsOnCardFilter = (currentCardId: string) => (votings: ICardVotings) => votings.cardId === currentCardId;
-
-function getVotesOnCard(votings: ICardVotings[], currentCardId: string): IVote[] | undefined {
+function  getVotesOnCard(votings: ICardVotings[], currentCardId: string): IVote[] | undefined {
     const existingVotesOnCard = votings.find(votingsOnCardFilter(currentCardId));
 
     if (existingVotesOnCard) {
@@ -32,23 +37,11 @@ function getVotesOnCard(votings: ICardVotings[], currentCardId: string): IVote[]
     }
 }
 
-function getVotesOnCardForMember(votings: ICardVotings[], currentCardId: string, currentMemberId: string): IVote | undefined {
-    const votesOnCard = getVotesOnCard(votings, currentCardId);
-
-    if (votesOnCard) {
-        return votesOnCard.find(votesForMemberFilter(currentMemberId));
-    }
-}
-
-function updateVote(votes: IVote[], currentMember: IMember, currentVotingType: VotingType) {
+function updateVote(votes: (IVote | IVoteAnonymous)[], currentMember: IMember, currentVotingType: VotingType) {
     const existingVoteForMember = votes.find(votesForMemberFilter(currentMember.id));
 
     if (existingVoteForMember) {
         if (isAnonymous(existingVoteForMember)) {
-            // todo
-            console.log(votes);
-            console.log('index: ' + votes.indexOf(existingVoteForMember));
-
             // remove old vote
             votes.splice(votes.indexOf(existingVoteForMember), 1);
 
@@ -69,49 +62,39 @@ function updateVote(votes: IVote[], currentMember: IMember, currentVotingType: V
     }
 }
 
-export const votingTypeFilter =
-    (currentVotingType: VotingType) => (vote: IVote) => vote.votingType === currentVotingType;
+export const votingTypeFilter = (currentVotingType: VotingType) => (vote: IVote) => vote.votingType === currentVotingType;
 
 export function getVotesOnCurrentCard(t: any): Promise<IVote[] | undefined> {
-    return Promise
-        .all([
-            t.get('card', 'shared', 'votings', []) as Promise<ICardVotings[]>,
-            t.card('id').get('id') as Promise<string>,
-        ])
-        .then(([votings, currentCardId]) => getVotesOnCard(votings, currentCardId));
+    return Promise.all([votings(t), card(t)])
+        .then(([votings, currentCard]) => getVotesOnCard(votings, currentCard.id));
 }
 
 export function getVotesOnCurrentCardForCurrentMember(t: any): Promise<IVote | undefined> {
-    return Promise
-        .all([
-            t.get('card', 'shared', 'votings', []) as Promise<ICardVotings[]>,
-            t.card('id').get('id') as Promise<string>,
-            t.member('id').get('id') as Promise<string>
-        ])
-        .then(([votings, currentCardId, currentMemberId]) =>
-            getVotesOnCardForMember(votings, currentCardId, currentMemberId));
+    return Promise.all([votings(t), card(t), member(t)])
+        .then(([votings, currentCard, currentMember]) => {
+                const votesOnCard = getVotesOnCard(votings, currentCard.id);
+
+                if (votesOnCard) {
+                    return votesOnCard.find(votesForMemberFilter(currentMember.id));
+                }
+        });
 }
 
 export function vote(t: any, currentVotingType: VotingType) {
-    return Promise
-        .all([
-            t.get('card', 'shared', 'votings', []) as Promise<ICardVotings[]>,
-            t.card('id').get('id') as Promise<string>,
-            t.member('id', 'username', 'fullName', 'avatar') as Promise<IMember>,
-            t.get('board', 'shared', 'voteAnonymously', true) as Promise<boolean>
-        ])
-        .then(([votings, currentCardId, currentMember, voteAnonymously]) => {
-            const votesOnCard = getVotesOnCard(votings, currentCardId);
+    return Promise.all([votings(t), card(t), member(t), settings(t)])
+        .then(([votings, currentCard, currentMember, settings]) => {
+            const votingsOnCard = votings.find(votingsOnCardFilter(currentCard.id));
 
-            if (voteAnonymously) {
-                currentMember.fullName = undefined;
+            if (settings.voteAnonymously) {
+                // anonymize member
+                currentMember = {id: currentMember.id};
             }
 
-            if (votesOnCard) {
-                updateVote(votesOnCard, currentMember, currentVotingType);
+            if (votingsOnCard) {
+                updateVote(votingsOnCard.votes, currentMember, currentVotingType);
             } else {
                 votings.push({
-                    cardId: currentCardId,
+                    cardId: currentCard.id,
                     votes: [{
                         member: currentMember,
                         votingType: currentVotingType
@@ -124,46 +107,35 @@ export function vote(t: any, currentVotingType: VotingType) {
 }
 
 export function deleteVote(t: any) {
-    return Promise
-    .all([
-        t.get('card', 'shared', 'votings', []) as Promise<ICardVotings[]>,
-        t.card('id').get('id') as Promise<string>,
-        t.member('id').get('id') as Promise<string>
-    ])
-    .then(([votings, currentCardId, currentMemberId]) => {
-        const existingVotingsOnCard = votings.find(votingsOnCardFilter(currentCardId));
+    return Promise.all([votings(t), card(t), member(t)])
+        .then(([votings, currentCard, currentMember]) => {
+            const votingsOnCard = votings.find(votingsOnCardFilter(currentCard.id));
 
-        if (existingVotingsOnCard) {
-            const votes = existingVotingsOnCard.votes;
-            const existingVoteForMember = votes.find(votesForMemberFilter(currentMemberId));
+            if (votingsOnCard) {
+                const votes = votingsOnCard.votes;
+                const existingVoteForMember = votes.find(votesForMemberFilter(currentMember.id));
 
-            if (existingVoteForMember) {
-                votes.splice(votes.indexOf(existingVoteForMember), 1);
+                if (existingVoteForMember) {
+                    votes.splice(votes.indexOf(existingVoteForMember), 1);
+                    t.set('card', 'shared', 'votings', votings);
+                }
             }
-        }
-        t.set('card', 'shared', 'votings', votings);
-    });
-
+        });
 }
 
 export function getVotingResults(t: any): Promise<IVotingResults | undefined> {
-    return Promise
-        .all([
-            t.get('card', 'shared', 'votings', []) as Promise<ICardVotings[]>,
-            t.get('board', 'shared', 'voteAnonymously', true) as Promise<boolean>,
-            t.card('id').get('id') as Promise<string>,
-        ])
-        .then(([votings, voteAnonymously, currentCardId]) => {
-            const votes = getVotesOnCard(votings, currentCardId);
+    return Promise.all([votings(t), card(t), settings(t)])
+        .then(([votings, currentCard, settings]) => {
+            const votes = getVotesOnCard(votings, currentCard.id);
 
             if (votes) {
-                const upVotes = votes.filter(votingTypeFilter(VotingType.UP)).map(vote => vote.member);
-                const downVotes = votes.filter(votingTypeFilter(VotingType.DOWN)).map(vote => vote.member);
+                const upVoters = votes.filter(votingTypeFilter(VotingType.UP)).map(vote => vote.member);
+                const downVoters = votes.filter(votingTypeFilter(VotingType.DOWN)).map(vote => vote.member);
 
                 return {
-                    voteAnonymously: voteAnonymously,
-                    upVoters: upVotes,
-                    downVoters: downVotes
+                    voteAnonymously: settings.voteAnonymously,
+                    upVoters: upVoters,
+                    downVoters: downVoters
                 }
             }
         });

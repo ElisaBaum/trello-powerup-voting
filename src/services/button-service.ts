@@ -11,7 +11,7 @@ const voteUpButton: IButton = {
     icon: cleanupPath(thumbsUpImg),
     text: 'Vote UP',
     callback(t) {
-        return vote(t, VotingType.UP).then(t.closePopup());
+        vote(t, VotingType.UP).then(t.closePopup());
     }
 };
 
@@ -20,7 +20,7 @@ const voteDownButton: IButton = {
     // hacky workaround to sort in correct order
     text: '\u200B' + 'Vote DOWN',
     callback(t) {
-        return vote(t, VotingType.DOWN).then(t.closePopup());
+        vote(t, VotingType.DOWN).then(t.closePopup());
     }
 };
 
@@ -29,7 +29,7 @@ const deleteVoteButton: IButton = {
     // hacky workaround to sort in correct order
     text: '\u2063' + 'Delete vote',
     callback(t) {
-        return deleteVote(t).then(t.closePopup());
+        deleteVote(t).then(t.closePopup());
     }
 };
 

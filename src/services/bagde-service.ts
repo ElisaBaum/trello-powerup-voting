@@ -23,7 +23,7 @@ function createBadge(votes: IVote[], votingType: VotingType): IBadge | undefined
     }
 }
 
-export function getBadges(t: any) {
+export function getBadges(t: any): Promise<IBadge[]> {
     return getVotesOnCurrentCard(t)
         .then((votes) => {
             if (votes) {

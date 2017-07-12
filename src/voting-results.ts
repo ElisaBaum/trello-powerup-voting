@@ -7,9 +7,11 @@ import {cleanupPath} from "./services/asset-service";
 
 const upVotesSelector = $('#upVoters');
 const upVotesIconSelector = $('#upVotesIcon');
+const upVotesResult = $('#upVotesResult');
 
 const downVotesSelector = $('#downVoters');
 const downVotesIconSelector = $('#downVotesIcon');
+const downVotesResult = $('#downVotesResult');
 
 const t = iframe();
 
@@ -25,15 +27,26 @@ function votingResultText(voteAnonymously: boolean, voters: IMember[]): string {
 
 const votingResultIcon = (image) => 'url("' + cleanupPath(image) + '")';
 
-t.render(function () {
+t.render(() => {
     getVotingResults(t)
         .then((results) => {
             if (results) {
-                upVotesSelector.text(votingResultText(results.voteAnonymously, results.upVoters));
-                upVotesIconSelector.css('background-image', votingResultIcon(thumbsUpImg));
 
-                downVotesSelector.text(votingResultText(results.voteAnonymously, results.downVoters));
-                downVotesIconSelector.css('background-image', votingResultIcon(thumbsDownImg));
+                if (results.upVoters.length) {
+                    upVotesSelector.text(votingResultText(results.voteAnonymously, results.upVoters));
+                    upVotesIconSelector.css('background-image', votingResultIcon(thumbsUpImg));
+                    upVotesResult.css('display', 'block');
+                } else {
+                    upVotesResult.css('display', 'none');
+                }
+
+                if (results.downVoters.length) {
+                    downVotesSelector.text(votingResultText(results.voteAnonymously, results.downVoters));
+                    downVotesIconSelector.css('background-image', votingResultIcon(thumbsDownImg));
+                    downVotesResult.css('display', 'block');
+                } else {
+                    downVotesResult.css('display', 'none');
+                }
             }
         })
         .then(() => t.sizeTo('#votingResults'));
