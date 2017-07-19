@@ -4,15 +4,15 @@ import {IVotingResults} from "../interfaces/IVotingResults";
 import {IMember} from "../interfaces/IMember";
 import {IVote, IVoteAnonymous} from "../interfaces/IVote";
 import {ICard} from "../interfaces/ICard";
-import {ISettings} from "../interfaces/ISettings";
+import {settings} from "./settings-service";
 
 const votings = (t: any) => t.get('card', 'shared', 'votings', []) as Promise<ICardVotings[]>;
 const card = (t: any) => t.card('id') as Promise<ICard>;
 const member = (t: any) => t.member('id', 'username', 'fullName', 'avatar') as Promise<IMember>;
-const settings = (t: any) => t.get('board', 'shared', 'voteAnonymously', {voteAnonymously: true}) as Promise<ISettings>;
 
 const votingsOnCardFilter = (currentCardId: string) => (votings: ICardVotings) => votings.cardId === currentCardId;
-const votesForMemberFilter = (currentMemberId: string) => (vote: IVote) => vote.member.id === currentMemberId;
+const votesForMemberFilter = (currentMemberId: string) => (vote: IVote | IVoteAnonymous) =>
+    (isAnonymous(vote) ? vote.memberId === currentMemberId : vote.member.id === currentMemberId);
 
 function isAnonymous(vote: IVote | IVoteAnonymous): vote is IVoteAnonymous {
     return (<IVoteAnonymous>vote).memberId !== undefined;

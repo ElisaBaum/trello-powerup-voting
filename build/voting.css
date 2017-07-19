@@ -3,10 +3,9 @@
     vertical-align: middle;
     display: inline-block;
     margin: 0 2px 2px 0;
-    padding: 1px 2px;
     background-repeat: no-repeat;
-    background-size: 16px;
-    background-position: 3px 2px;
+    background-size: 14px;
+    background-position: 2px 2px;
     height: 18px;
     width: 18px;
 }
@@ -19,6 +18,41 @@
     background-color: #CF513D;
 }
 
-#downVotesResult, #upVotesResult {
+#downVotesResult, #upVotesResult, #upVoters, #downVoters {
     display: none;
+}
+
+.hidden {
+    display: none;
+}
+
+.visible {
+    display: flex;
+}
+
+.expandable {
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.voter-icon {
+    width: 30px;
+    border-radius: 3px;
+}
+
+.tile:first-of-type {
+    margin-top: 3px;
+}
+
+.panel .panel-header, .panel .panel-body {
+    padding: 0;
+}
+
+.column {
+    border: none;
+}
+
+body {
+    font-family: "Helvetica Neue",Arial,Helvetica,sans-serif;
+    background-color: #EDEFF0;
 }

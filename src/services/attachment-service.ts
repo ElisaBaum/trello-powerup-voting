@@ -7,8 +7,7 @@ import {getVotesOnCurrentCard} from "./vote-service";
 
 const resultsAttachment: IAttachment = {
     name: "Voting Results",
-    // todo bessere url?
-    url: "/results.html"
+    url: "http://lmgtfy.com/?q=Voting+results"
 };
 
 export function getAttachmentSections(t, options): Promise<IAttachmentSection[]> {
@@ -29,20 +28,21 @@ export function getAttachmentSections(t, options): Promise<IAttachmentSection[]>
             } else {
                 return [];
             }
-
     });
 }
 
 export function attachResults(t: any): void {
-    (t.card('attachments') as Promise<IAttachments>)
-        .then((attachments) => {
-
-            // todo include ist nicht so gut
+    Promise.all([
+        getVotesOnCurrentCard(t),
+        (t.card('attachments') as Promise<IAttachments>)
+    ]).then(([votings, attachments]) => {
+        if (votings) {
             const existentAttachment = attachments.attachments
-                .find(currentAttachment => currentAttachment.url.includes(resultsAttachment.url));
+                .find(currentAttachment => currentAttachment.url === resultsAttachment.url);
 
             if (! existentAttachment) {
                 t.attach(resultsAttachment);
             }
-        });
+        }
+    });
 }

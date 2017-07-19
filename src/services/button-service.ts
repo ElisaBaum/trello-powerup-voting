@@ -49,7 +49,7 @@ export function getCardButtons(t) {
                 buttons.push(voteDownButton);
             }
 
-            // todo bessere stelle?
+            // workaround: attach results every time buttons are rendered
             attachResults(t);
 
             return buttons;

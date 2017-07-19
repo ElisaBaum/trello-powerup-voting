@@ -30,4 +30,8 @@ fuse
     .bundle('voting-results')
     .instructions('>voting-results.ts');
 
+fuse
+    .bundle('settings')
+    .instructions('>settings.ts');
+
 fuse.run();

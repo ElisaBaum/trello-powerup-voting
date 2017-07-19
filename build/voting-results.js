@@ -10263,43 +10263,83 @@ var trello_powerups_1 = require("trello-powerups");
 var thumbs_up_white_svg_1 = require("./images/thumbs_up_white.svg");
 var thumbs_down_white_svg_1 = require("./images/thumbs_down_white.svg");
 var asset_service_1 = require("./services/asset-service");
-var upVotesSelector = $('#upVoters');
-var upVotesIconSelector = $('#upVotesIcon');
-var upVotesResult = $('#upVotesResult');
-var downVotesSelector = $('#downVoters');
-var downVotesIconSelector = $('#downVotesIcon');
-var downVotesResult = $('#downVotesResult');
 var t = trello_powerups_1.iframe();
-var membersWithFullNameFilter = function (member) { return member.fullName !== undefined; };
-function votingResultText(voteAnonymously, voters) {
-    if (voteAnonymously) {
-        return voters.length.toString();
-    }
-    else {
-        return voters.filter(membersWithFullNameFilter).map(function (member) { return member.fullName; }).join(', ');
+var upVotingRendering = {
+    voters: [],
+    voteAnonymously: true,
+    votersCountSelector: $('#upVotersCount'),
+    votersSelector: $('#upVoters'),
+    votesSelector: $('#upVotes'),
+    votingIconSelector: $('#upVotingIcon'),
+    votingResultSelector: $('#upVotingResult'),
+    votingResultHeaderSelector: $('#upVotingResultHeader'),
+    votingTypeIcon: thumbs_up_white_svg_1.default
+};
+var downVotingRendering = {
+    voters: [],
+    voteAnonymously: true,
+    votersCountSelector: $('#downVotersCount'),
+    votersSelector: $('#downVoters'),
+    votesSelector: $('#downVotes'),
+    votingIconSelector: $('#downVotingIcon'),
+    votingResultSelector: $('#downVotingResult'),
+    votingResultHeaderSelector: $('#downVotingResultHeader'),
+    votingTypeIcon: thumbs_down_white_svg_1.default
+};
+var votingResultIcon = function (image) { return 'url("' + asset_service_1.cleanupPath(image) + '")'; };
+var toggle = function (element) { return element.slideToggle(0, function () { return t.sizeTo('#votingResults'); }); };
+function voterInformations(voter) {
+    var voterIcon = $('<div />').attr('class', 'tile-icon').append($('<img>', { src: voter.avatar, 'class': 'voter-icon' }));
+    var voterName = $('<div />').attr('class', 'tile-content').append($('<div />').attr('class', 'tile-title').text(voter.fullName || voter.username || ''));
+    return $('<div />').attr('class', 'tile tile-centered')
+        .append(voterIcon)
+        .append(voterName);
+}
+function renderVoters(result) {
+    if (!result.voteAnonymously) {
+        var votesWithNames = result.voters.filter(function (voter) { return (voter.fullName !== undefined || voter.username !== undefined); });
+        if (votesWithNames.length) {
+            result.votesSelector.attr('class', 'expandable');
+        }
+        votesWithNames.forEach(function (voter) { return result.votersSelector.append(voterInformations(voter)); });
     }
 }
-var votingResultIcon = function (image) { return 'url("' + asset_service_1.cleanupPath(image) + '")'; };
+function renderResult(result) {
+    // clear old voters
+    result.votersSelector.empty();
+    if (result.voters.length) {
+        result.votersCountSelector.text(result.voters.length);
+        result.votingIconSelector.css('background-image', votingResultIcon(result.votingTypeIcon));
+        result.votingResultSelector.addClass('visible');
+        result.votingResultSelector.removeClass('hidden');
+        result.votingResultHeaderSelector.addClass('visible');
+        result.votingResultHeaderSelector.removeClass('hidden');
+        renderVoters(result);
+    }
+    else {
+        // hide empty up voters in result
+        result.votingResultSelector.addClass('hidden');
+        result.votingResultSelector.removeClass('visible');
+        result.votingResultHeaderSelector.addClass('hidden');
+        result.votingResultHeaderSelector.removeClass('visible');
+    }
+}
+upVotingRendering.votesSelector.click(function () {
+    toggle(upVotingRendering.votersSelector);
+});
+downVotingRendering.votesSelector.click(function () {
+    toggle(downVotingRendering.votersSelector);
+});
 t.render(function () {
     vote_service_1.getVotingResults(t)
         .then(function (results) {
         if (results) {
-            if (results.upVoters.length) {
-                upVotesSelector.text(votingResultText(results.voteAnonymously, results.upVoters));
-                upVotesIconSelector.css('background-image', votingResultIcon(thumbs_up_white_svg_1.default));
-                upVotesResult.css('display', 'block');
-            }
-            else {
-                upVotesResult.css('display', 'none');
-            }
-            if (results.downVoters.length) {
-                downVotesSelector.text(votingResultText(results.voteAnonymously, results.downVoters));
-                downVotesIconSelector.css('background-image', votingResultIcon(thumbs_down_white_svg_1.default));
-                downVotesResult.css('display', 'block');
-            }
-            else {
-                downVotesResult.css('display', 'none');
-            }
+            upVotingRendering.voters = results.upVoters;
+            upVotingRendering.voteAnonymously = results.voteAnonymously;
+            renderResult(upVotingRendering);
+            downVotingRendering.voters = results.downVoters;
+            downVotingRendering.voteAnonymously = results.voteAnonymously;
+            renderResult(downVotingRendering);
         }
     })
         .then(function () { return t.sizeTo('#votingResults'); });
@@ -10311,12 +10351,14 @@ ___scope___.file("services/vote-service.js", function(exports, require, module, 
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var VotingType_1 = require("../enums/VotingType");
+var settings_service_1 = require("./settings-service");
 var votings = function (t) { return t.get('card', 'shared', 'votings', []); };
 var card = function (t) { return t.card('id'); };
 var member = function (t) { return t.member('id', 'username', 'fullName', 'avatar'); };
-var settings = function (t) { return t.get('board', 'shared', 'voteAnonymously', { voteAnonymously: true }); };
 var votingsOnCardFilter = function (currentCardId) { return function (votings) { return votings.cardId === currentCardId; }; };
-var votesForMemberFilter = function (currentMemberId) { return function (vote) { return vote.member.id === currentMemberId; }; };
+var votesForMemberFilter = function (currentMemberId) { return function (vote) {
+    return (isAnonymous(vote) ? vote.memberId === currentMemberId : vote.member.id === currentMemberId);
+}; };
 function isAnonymous(vote) {
     return vote.memberId !== undefined;
 }
@@ -10382,7 +10424,7 @@ function getVotesOnCurrentCardForCurrentMember(t) {
 }
 exports.getVotesOnCurrentCardForCurrentMember = getVotesOnCurrentCardForCurrentMember;
 function vote(t, currentVotingType) {
-    return Promise.all([votings(t), card(t), member(t), settings(t)])
+    return Promise.all([votings(t), card(t), member(t), settings_service_1.settings(t)])
         .then(function (_a) {
         var votings = _a[0], currentCard = _a[1], currentMember = _a[2], settings = _a[3];
         var votingsOnCard = votings.find(votingsOnCardFilter(currentCard.id));
@@ -10423,7 +10465,7 @@ function deleteVote(t) {
 }
 exports.deleteVote = deleteVote;
 function getVotingResults(t) {
-    return Promise.all([votings(t), card(t), settings(t)])
+    return Promise.all([votings(t), card(t), settings_service_1.settings(t)])
         .then(function (_a) {
         var votings = _a[0], currentCard = _a[1], settings = _a[2];
         var votes = getVotesOnCard(votings, currentCard.id);
@@ -10451,6 +10493,15 @@ var VotingType;
     VotingType[VotingType["DOWN"] = 1] = "DOWN";
 })(VotingType = exports.VotingType || (exports.VotingType = {}));
 //# sourceMappingURL=VotingType.js.map
+});
+___scope___.file("services/settings-service.js", function(exports, require, module, __filename, __dirname){
+
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.defaultSettings = { voteAnonymously: true };
+exports.settings = function (t) { return t.get('board', 'shared', 'settings', exports.defaultSettings); };
+exports.updateSettings = function (t, settings) { return t.set('board', 'shared', 'settings', settings); };
+//# sourceMappingURL=settings-service.js.map
 });
 ___scope___.file("images/thumbs_up_white.svg", function(exports, require, module, __filename, __dirname){
 

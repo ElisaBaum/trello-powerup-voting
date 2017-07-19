@@ -6,7 +6,9 @@ export interface IVote {
     votingType: VotingType;
 }
 
-// deprecated
+/**
+ * @deprecated
+ */
 export interface IVoteAnonymous {
     memberId: string;
     votingType: VotingType;
