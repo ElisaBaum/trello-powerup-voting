@@ -6,6 +6,7 @@ import thumbsDownImg from './images/thumbs_down_white.svg';
 import {cleanupPath} from "./services/asset-service";
 import {IVotingResultRenderingInformation} from "./interfaces/IVotingResultRenderingInformation";
 
+
 const t = iframe();
 
 const upVotingRendering: IVotingResultRenderingInformation = {

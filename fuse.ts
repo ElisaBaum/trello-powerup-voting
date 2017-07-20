@@ -1,4 +1,4 @@
-import {FuseBox, CopyPlugin} from 'fuse-box';
+import {FuseBox, CopyPlugin, HTMLPlugin, CSSResourcePlugin, CSSPlugin, WebIndexPlugin} from 'fuse-box';
 
 const fuse = FuseBox.init({
     homeDir: 'src',
@@ -7,9 +7,18 @@ const fuse = FuseBox.init({
     plugins: [
         CopyPlugin(
             {
-                files: ['images/*.svg']
+                files: [
+                    'images/*.svg',
+                    'views/*.html'
+                ]
             }
-        )
+        ),
+        [CSSResourcePlugin(), CSSPlugin()],
+        WebIndexPlugin({
+            title: 'Welcome to FuseBox',
+            bundles: ['settings'],
+            template: './src/views/settings.html'
+        })
     ],
     shim: {
         'trello-powerups': {

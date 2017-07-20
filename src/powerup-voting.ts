@@ -2,6 +2,7 @@ import {getBadges} from "./services/bagde-service";
 import {getCardButtons} from "./services/button-service";
 import {initialize} from "trello-powerups";
 import {getAttachmentSections} from "./services/attachment-service";
+import settingsView from "./views/settings.html";
 
 initialize({
     'card-buttons': function (t, options) {
@@ -16,7 +17,7 @@ initialize({
     'show-settings': function (t, options) {
         return t.popup({
             title: 'Settings',
-            url: './settings.html'
+            url: settingsView
         })
     }
 });
