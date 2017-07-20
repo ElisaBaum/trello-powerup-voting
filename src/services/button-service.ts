@@ -29,10 +29,7 @@ const deleteVoteButton: IButton = {
     // hacky workaround to sort in correct order
     text: '\u2063' + 'Delete vote',
     callback(t) {
-        return t.popup({
-            title: 'Board Button Popup',
-            url: './settings.html'
-        });
+        deleteVote(t).then(t.closePopup());
     }
 };
 

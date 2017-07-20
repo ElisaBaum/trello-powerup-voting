@@ -2,8 +2,6 @@ import {iframe} from "trello-powerups";
 import {ISettings} from "./interfaces/ISettings";
 import {defaultSettings, settings, updateSettings} from "./services/settings-service";
 
-import "spectre.css/dist/spectre.css";
-
 const t = iframe();
 const voteAnonymouslySelector = $('#voteAnonymously');
 

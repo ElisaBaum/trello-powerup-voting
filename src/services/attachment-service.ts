@@ -4,7 +4,6 @@ import {IAttachment} from "../interfaces/IAttachment";
 import {IAttachments} from "../interfaces/IAttachments";
 import {IAttachmentSection} from "../interfaces/IAttachmentSection";
 import {getVotesOnCurrentCard} from "./vote-service";
-import resultsView from "../views/results.html";
 
 const resultsAttachment: IAttachment = {
     name: "Voting Results",
@@ -12,8 +11,6 @@ const resultsAttachment: IAttachment = {
 };
 
 export function getAttachmentSections(t, options): Promise<IAttachmentSection[]> {
-    console.log(resultsView);
-
     return getVotesOnCurrentCard(t)
         .then((votes) => {
             if (votes) {
@@ -25,7 +22,7 @@ export function getAttachmentSections(t, options): Promise<IAttachmentSection[]>
                     claimed: claimed,
                     content: {
                         type: 'iframe',
-                        url: t.signUrl(cleanupPath(resultsView))
+                        url: t.signUrl("./results.html")
                     }
                 }];
             } else {
