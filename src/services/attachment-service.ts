@@ -5,6 +5,8 @@ import {IAttachments} from "../interfaces/IAttachments";
 import {IAttachmentSection} from "../interfaces/IAttachmentSection";
 import {getVotesOnCurrentCard} from "./vote-service";
 
+import resultsView from "../views/results.html";
+
 const resultsAttachment: IAttachment = {
     name: "Voting Results",
     url: "http://lmgtfy.com/?q=Voting+results"
@@ -22,7 +24,7 @@ export function getAttachmentSections(t, options): Promise<IAttachmentSection[]>
                     claimed: claimed,
                     content: {
                         type: 'iframe',
-                        url: t.signUrl("./results.html")
+                        url: t.signUrl(cleanupPath(resultsView))
                     }
                 }];
             } else {

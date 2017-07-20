@@ -10253,6 +10253,48 @@ if ( !noGlobal ) {
 return jQuery;
 } );
 
+FuseBox.global("__fsbx_css", function (__filename, contents) {
+    if (FuseBox.isServer) {
+        return;
+    }
+    var styleId = __filename.replace(/[\.\/]+/g, '-');
+    if (styleId.charAt(0) === '-')
+        styleId = styleId.substring(1);
+    var exists = document.getElementById(styleId);
+    if (!exists) {
+        //<link href="//fonts.googleapis.com/css?family=Covered+By+Your+Grace" rel="stylesheet" type="text/css">
+        var s = document.createElement(contents ? 'style' : 'link');
+        s.id = styleId;
+        s.type = 'text/css';
+        if (contents) {
+            s.innerHTML = contents;
+        }
+        else {
+            s.rel = 'stylesheet';
+            s.href = __filename;
+        }
+        document.getElementsByTagName('head')[0].appendChild(s);
+    }
+    else {
+        if (contents) {
+            exists.innerHTML = contents;
+        }
+    }
+});
+/**
+ * Listens to 'async' requets and if the name is a css file
+ * wires it to `__fsbx_css`
+ */
+FuseBox.on('async', function (name) {
+    if (FuseBox.isServer) {
+        return;
+    }
+    if (/\.css$/.test(name)) {
+        __fsbx_css(name);
+        return false;
+    }
+});
+
 FuseBox.pkg("default", {}, function(___scope___){
 ___scope___.file("powerup-voting.js", function(exports, require, module, __filename, __dirname){
 
@@ -10262,6 +10304,8 @@ var bagde_service_1 = require("./services/bagde-service");
 var button_service_1 = require("./services/button-service");
 var trello_powerups_1 = require("trello-powerups");
 var attachment_service_1 = require("./services/attachment-service");
+var asset_service_1 = require("./services/asset-service");
+var settings_html_1 = require("./views/settings.html");
 trello_powerups_1.initialize({
     'card-buttons': function (t, options) {
         return button_service_1.getCardButtons(t);
@@ -10275,7 +10319,7 @@ trello_powerups_1.initialize({
     'show-settings': function (t, options) {
         return t.popup({
             title: 'Settings',
-            url: './settings.html'
+            url: asset_service_1.cleanupPath(settings_html_1.default)
         });
     }
 });
@@ -10490,7 +10534,7 @@ ___scope___.file("services/asset-service.js", function(exports, require, module,
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function cleanupPath(path) {
-    return '.' + path;
+    return './' + path;
 }
 exports.cleanupPath = cleanupPath;
 //# sourceMappingURL=asset-service.js.map
@@ -10572,6 +10616,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var thumbs_up_svg_1 = require("../images/thumbs_up.svg");
 var asset_service_1 = require("./asset-service");
 var vote_service_1 = require("./vote-service");
+var results_html_1 = require("../views/results.html");
 var resultsAttachment = {
     name: "Voting Results",
     url: "http://lmgtfy.com/?q=Voting+results"
@@ -10587,7 +10632,7 @@ function getAttachmentSections(t, options) {
                     claimed: claimed,
                     content: {
                         type: 'iframe',
-                        url: t.signUrl("./results.html")
+                        url: t.signUrl(asset_service_1.cleanupPath(results_html_1.default))
                     }
                 }];
         }
@@ -10614,6 +10659,14 @@ function attachResults(t) {
 }
 exports.attachResults = attachResults;
 //# sourceMappingURL=attachment-service.js.map
+});
+___scope___.file("views/results.html", function(exports, require, module, __filename, __dirname){
+
+module.exports.default = "894b703d-results.html";
+});
+___scope___.file("views/settings.html", function(exports, require, module, __filename, __dirname){
+
+module.exports.default = "6b135142-settings.html";
 });
 });
 FuseBox.pkg("trello-powerups", {}, function(___scope___){

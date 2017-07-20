@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+    <head>
+        <link rel="stylesheet" href="https://trello.com/power-ups/power-up.css">
+        <script src="https://trello.com/power-ups/power-up.min.js"></script>
+    </head>
+    <body>
+        <div id="votingResults" class="panel">
+            <div class="panel-header columns">
+                <div id="upVotingResultHeader" class="hidden column col-6 col-xs-12">
+                    <span id="upVotingIcon" class="voting-result-icon icon-green"></span>
+                    <span id="upVotes">
+                        <span id="upVotersCount"></span>
+                        <span>Vote(s)</span>
+                    </span>
+                </div>
+                <div id="downVotingResultHeader" class="hidden column col-6 col-xs-12">
+                    <span id="downVotingIcon" class="voting-result-icon icon-red"></span>
+                    <span id="downVotes">
+                        <span id="downVotersCount"></span>
+                        <span>Vote(s)</span>
+                    </span>
+                </div>
+            </div>
+            <div class="panel-body columns">
+                <div id="upVotingResult" class="hidden column col-6 col-xs-12">
+                    <div id="upVoters">
+                    </div>
+                </div>
+                <div id="downVotingResult" class="hidden column col-6 col-xs-12">
+                    <div id="downVoters">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script src="./voting-results.js"></script>
+    </body>
+</html>

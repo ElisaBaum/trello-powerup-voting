@@ -6,6 +6,9 @@ import thumbsDownImg from './images/thumbs_down_white.svg';
 import {cleanupPath} from "./services/asset-service";
 import {IVotingResultRenderingInformation} from "./interfaces/IVotingResultRenderingInformation";
 
+import "./styles/voting-results.css";
+import "spectre.css/dist/spectre.min.css";
+
 const t = iframe();
 
 const upVotingRendering: IVotingResultRenderingInformation = {
