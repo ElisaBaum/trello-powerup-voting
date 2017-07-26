@@ -38,7 +38,7 @@ export function attachResults(t: any): void {
         getVotesOnCurrentCard(t),
         (t.card('attachments') as Promise<IAttachments>)
     ]).then(([votings, attachments]) => {
-        if (votings) {
+        if (votings && votings.length) {
             const existentAttachment = attachments.attachments
                 .find(currentAttachment => currentAttachment.url === resultsAttachment.url);
 

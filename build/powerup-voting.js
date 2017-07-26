@@ -10648,7 +10648,7 @@ function attachResults(t) {
         t.card('attachments')
     ]).then(function (_a) {
         var votings = _a[0], attachments = _a[1];
-        if (votings) {
+        if (votings && votings.length) {
             var existentAttachment = attachments.attachments
                 .find(function (currentAttachment) { return currentAttachment.url === resultsAttachment.url; });
             if (!existentAttachment) {
