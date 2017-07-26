@@ -4,13 +4,8 @@ export interface IVotingResultRenderingInformation {
   voters: IMember[];
   voteAnonymously: boolean;
 
-  votesSelector: JQuery;
+  votingResultsSelector: JQuery;
 
-  votingResultHeaderSelector: JQuery;
-  votingResultSelector: JQuery;
-  votingIconSelector: JQuery;
   votingTypeIcon: string;
 
-  votersCountSelector: JQuery;
-  votersSelector: JQuery;
 }

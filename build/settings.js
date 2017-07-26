@@ -10310,12 +10310,15 @@ voteAnonymouslySelector.change(function () {
     currentSettings.voteAnonymously = $(this).prop('checked');
     return settings_service_1.updateSettings(t, currentSettings);
 });
-t.render(function () {
-    return settings_service_1.settings(t)
+function renderSettings(t) {
+    settings_service_1.settings(t)
         .then(function (settings) {
         voteAnonymouslySelector.prop('checked', settings.voteAnonymously);
         currentSettings = settings;
     });
+}
+t.render(function () {
+    renderSettings(t);
 });
 //# sourceMappingURL=settings.js.map
 });

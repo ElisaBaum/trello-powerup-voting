@@ -10305,76 +10305,103 @@ var trello_powerups_1 = require("trello-powerups");
 var thumbs_up_white_svg_1 = require("./images/thumbs_up_white.svg");
 var thumbs_down_white_svg_1 = require("./images/thumbs_down_white.svg");
 var asset_service_1 = require("./services/asset-service");
-require("./styles/voting-results.css");
 require("spectre.css/dist/spectre.min.css");
+require("./styles/voting-results.css");
 var t = trello_powerups_1.iframe();
 var upVotingRendering = {
     voters: [],
     voteAnonymously: true,
-    votersCountSelector: $('#upVotersCount'),
-    votersSelector: $('#upVoters'),
-    votesSelector: $('#upVotes'),
-    votingIconSelector: $('#upVotingIcon'),
-    votingResultSelector: $('#upVotingResult'),
-    votingResultHeaderSelector: $('#upVotingResultHeader'),
+    votingResultsSelector: $('#upVotingResults'),
     votingTypeIcon: thumbs_up_white_svg_1.default
 };
 var downVotingRendering = {
     voters: [],
     voteAnonymously: true,
-    votersCountSelector: $('#downVotersCount'),
-    votersSelector: $('#downVoters'),
-    votesSelector: $('#downVotes'),
-    votingIconSelector: $('#downVotingIcon'),
-    votingResultSelector: $('#downVotingResult'),
-    votingResultHeaderSelector: $('#downVotingResultHeader'),
+    votingResultsSelector: $('#downVotingResults'),
     votingTypeIcon: thumbs_down_white_svg_1.default
 };
 var votingResultIcon = function (image) { return 'url("' + asset_service_1.cleanupPath(image) + '")'; };
-var toggle = function (element) { return element.slideToggle(0, function () { return t.sizeTo('#votingResults'); }); };
+var resize = function () { return t.sizeTo('#votingResults'); };
+var toggle = function (element) { return element.slideToggle(0, resize); };
+var showVotersElement = function (renderingInfo) {
+    return renderingInfo.votingResultsSelector.find('.show-voters');
+};
+var hideVotersElement = function (renderingInfo) {
+    return renderingInfo.votingResultsSelector.find('.hide-voters');
+};
+var votersElement = function (renderingInfo) {
+    return renderingInfo.votingResultsSelector.find('.voters');
+};
+function voterInitials(voter) {
+    var initials = function (name) {
+        return name.split(' ').map(function (element) { return element.charAt(0).toUpperCase(); }).slice(0, 3).join('');
+    };
+    if (voter.fullName) {
+        return initials(voter.fullName);
+    }
+    if (voter.username) {
+        return initials(voter.username);
+    }
+    return 'U';
+}
 function voterInformations(voter) {
-    var voterIcon = $('<div />').attr('class', 'tile-icon').append($('<img>', { src: voter.avatar, 'class': 'voter-icon' }));
+    var voterIcon;
+    if (voter.avatar) {
+        voterIcon = $('<div />').attr('class', 'tile-icon').append($('<img>', { src: voter.avatar, 'class': 'voter-icon' }));
+    }
+    else {
+        voterIcon = $('<div />').attr('class', 'voter-without-icon tile-icon').text(voterInitials(voter));
+    }
     var voterName = $('<div />').attr('class', 'tile-content').append($('<div />').attr('class', 'tile-title').text(voter.fullName || voter.username || ''));
-    return $('<div />').attr('class', 'tile tile-centered')
+    return $('<div />').attr('class', 'voter tile tile-centered')
         .append(voterIcon)
         .append(voterName);
 }
 function renderVoters(result) {
     if (!result.voteAnonymously) {
         var votesWithNames = result.voters.filter(function (voter) { return (voter.fullName !== undefined || voter.username !== undefined); });
-        if (votesWithNames.length) {
-            result.votesSelector.attr('class', 'expandable');
+        // todo: remove me later; just to create some more votes
+        var duplicated = votesWithNames.map(function (item) {
+            return [item, item, item];
+        }).reduce(function (a, b) { return a.concat(b); });
+        var voters_1 = votersElement(result);
+        duplicated.forEach(function (voter) { return voters_1.append(voterInformations(voter)); });
+        if (votesWithNames.length > 0 && hideVotersElement(result).hasClass('hidden')) {
+            showVotersElement(result).removeClass('hidden');
         }
-        votesWithNames.forEach(function (voter) { return result.votersSelector.append(voterInformations(voter)); });
     }
 }
 function renderResult(result) {
     // clear old voters
-    result.votersSelector.empty();
+    votersElement(result).empty();
     if (result.voters.length) {
-        result.votersCountSelector.text(result.voters.length);
-        result.votingIconSelector.css('background-image', votingResultIcon(result.votingTypeIcon));
-        result.votingResultSelector.addClass('visible');
-        result.votingResultSelector.removeClass('hidden');
-        result.votingResultHeaderSelector.addClass('visible');
-        result.votingResultHeaderSelector.removeClass('hidden');
+        result.votingResultsSelector.find('.voters-count').text(result.voters.length);
+        result.votingResultsSelector.find('.voting-result-icon').css('background-image', votingResultIcon(result.votingTypeIcon));
+        result.votingResultsSelector.removeClass('hidden');
         renderVoters(result);
     }
     else {
         // hide empty up voters in result
-        result.votingResultSelector.addClass('hidden');
-        result.votingResultSelector.removeClass('visible');
-        result.votingResultHeaderSelector.addClass('hidden');
-        result.votingResultHeaderSelector.removeClass('visible');
+        result.votingResultsSelector.addClass('hidden');
     }
 }
-upVotingRendering.votesSelector.click(function () {
-    toggle(upVotingRendering.votersSelector);
-});
-downVotingRendering.votesSelector.click(function () {
-    toggle(downVotingRendering.votersSelector);
-});
-t.render(function () {
+function showVoters(renderingInfo) {
+    showVotersElement(renderingInfo).addClass('hidden');
+    hideVotersElement(renderingInfo).removeClass('hidden');
+    toggle(votersElement(renderingInfo));
+}
+function hideVoters(renderingInfo) {
+    hideVotersElement(renderingInfo).addClass('hidden');
+    showVotersElement(renderingInfo).removeClass('hidden');
+    toggle(votersElement(renderingInfo));
+}
+function registerClickListeners() {
+    hideVotersElement(upVotingRendering).click(function () { return hideVoters(upVotingRendering); });
+    showVotersElement(upVotingRendering).click(function () { return showVoters(upVotingRendering); });
+    hideVotersElement(downVotingRendering).click(function () { return hideVoters(downVotingRendering); });
+    showVotersElement(downVotingRendering).click(function () { return showVoters(downVotingRendering); });
+}
+function renderVotingResults(t) {
     vote_service_1.getVotingResults(t)
         .then(function (results) {
         if (results) {
@@ -10386,7 +10413,12 @@ t.render(function () {
             renderResult(downVotingRendering);
         }
     })
-        .then(function () { return t.sizeTo('#votingResults'); });
+        .then(resize);
+}
+registerClickListeners();
+t.render(function () {
+    renderVotingResults(t);
+    console.log('results');
 });
 //# sourceMappingURL=voting-results.js.map
 });
@@ -10568,7 +10600,7 @@ exports.cleanupPath = cleanupPath;
 ___scope___.file("styles/voting-results.css", function(exports, require, module, __filename, __dirname){
 
 
-__fsbx_css("styles/voting-results.css", ".voting-result-icon {\n    border-radius: 3px;\n    vertical-align: middle;\n    display: inline-block;\n    margin: 0 2px 2px 0;\n    background-repeat: no-repeat;\n    background-size: 14px;\n    background-position: 2px 2px;\n    height: 18px;\n    width: 18px;\n}\n\n.icon-green {\n    background-color: #61BD4F;\n}\n\n.icon-red {\n    background-color: #CF513D;\n}\n\n#downVotesResult, #upVotesResult, #upVoters, #downVoters {\n    display: none;\n}\n\n.hidden {\n    display: none;\n}\n\n.visible {\n    display: flex;\n}\n\n.expandable {\n    text-decoration: underline;\n    cursor: pointer;\n}\n\n.voter-icon {\n    width: 30px;\n    border-radius: 3px;\n}\n\n.tile:first-of-type {\n    margin-top: 3px;\n}\n\n.panel .panel-header, .panel .panel-body {\n    padding: 0;\n}\n\n.column {\n    border: none;\n}\n\nbody {\n    font-family: \"Helvetica Neue\",Arial,Helvetica,sans-serif;\n    background-color: #EDEFF0;\n}\n")
+__fsbx_css("styles/voting-results.css", ".voting-result-header {\n    border-radius: 3px;\n    color: #fff;\n    display: inline-block;\n    padding: 2px;\n}\n\n.voting-result-header.green {\n    background-color: #61BD4F;\n}\n\n.voting-result-header.red {\n    background-color: #CF513D;\n}\n\n.voting-result-icon {\n    vertical-align: middle;\n    display: inline-block;\n    background-repeat: no-repeat;\n    background-size: 16px;\n    background-position: 2px 0;\n    height: 18px;\n    width: 18px;\n}\n\n.voters-count {\n    padding-right: 2px;\n}\n\n.hidden {\n    display: none;\n}\n\n.voter {\n    min-height: 34px;\n    max-height: 34px;\n}\n\n.voter:first-of-type {\n    margin-top: 4px;\n}\n\n.voter-icon {\n    width: 30px;\n    border-radius: 3px;\n}\n\n.voter-without-icon {\n    width: 30px;\n    height: 30px;\n    background-color: #D6DADC;\n    border-radius: 3px;\n    font-size: 9pt;\n    font-weight: 700;\n    line-height: 30px;\n    overflow: hidden;\n    text-align: center;\n\n}\n\n#votingResults {\n    border: none;\n}\n\n.show-voters, .hide-voters {\n    text-decoration: underline;\n    border-radius: 3px;\n    color: #8c8c8c;\n    margin: 2px 0;\n    padding: 6px 8px;\n}\n\n.show-voters:hover, .hide-voters:hover {\n    background: #D6DADC;\n    color: #4d4d4d;\n}\n\nbody {\n    font-family: \"Helvetica Neue\",Arial,Helvetica,sans-serif;\n    background-color: #EDEFF0;\n}\n")
 });
 });
 FuseBox.pkg("trello-powerups", {}, function(___scope___){

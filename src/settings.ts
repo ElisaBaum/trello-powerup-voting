@@ -14,10 +14,14 @@ voteAnonymouslySelector.change(function() {
   return updateSettings(t, currentSettings);
 });
 
-t.render(function(){
-  return settings(t)
+function renderSettings(t) {
+  settings(t)
     .then((settings) => {
       voteAnonymouslySelector.prop('checked', settings.voteAnonymously);
       currentSettings = settings;
     })
+}
+
+t.render(function(){
+  renderSettings(t);
 });

@@ -6,49 +6,69 @@ import thumbsDownImg from './images/thumbs_down_white.svg';
 import {cleanupPath} from "./services/asset-service";
 import {IVotingResultRenderingInformation} from "./interfaces/IVotingResultRenderingInformation";
 
-import "./styles/voting-results.css";
 import "spectre.css/dist/spectre.min.css";
+import "./styles/voting-results.css";
 
 const t = iframe();
 
 const upVotingRendering: IVotingResultRenderingInformation = {
     voters: [],
     voteAnonymously: true,
-    votersCountSelector: $('#upVotersCount'),
-    votersSelector: $('#upVoters'),
-    votesSelector: $('#upVotes'),
-    votingIconSelector: $('#upVotingIcon'),
-    votingResultSelector: $('#upVotingResult'),
-    votingResultHeaderSelector: $('#upVotingResultHeader'),
+    votingResultsSelector: $('#upVotingResults'),
     votingTypeIcon: thumbsUpImg
 };
 
 const downVotingRendering: IVotingResultRenderingInformation = {
     voters: [],
     voteAnonymously: true,
-    votersCountSelector: $('#downVotersCount'),
-    votersSelector: $('#downVoters'),
-    votesSelector: $('#downVotes'),
-    votingIconSelector: $('#downVotingIcon'),
-    votingResultSelector: $('#downVotingResult'),
-    votingResultHeaderSelector: $('#downVotingResultHeader'),
+    votingResultsSelector: $('#downVotingResults'),
     votingTypeIcon: thumbsDownImg
 };
 
 const votingResultIcon = (image) => 'url("' + cleanupPath(image) + '")';
 
-const toggle = (element: JQuery) => element.slideToggle(0, () => t.sizeTo('#votingResults'));
+const resize = () => t.sizeTo('#votingResults');
+
+const toggle = (element: JQuery) => element.slideToggle(0, resize);
+
+const showVotersElement = (renderingInfo: IVotingResultRenderingInformation) =>
+    renderingInfo.votingResultsSelector.find('.show-voters');
+
+const hideVotersElement = (renderingInfo: IVotingResultRenderingInformation) =>
+    renderingInfo.votingResultsSelector.find('.hide-voters');
+
+const votersElement = (renderingInfo: IVotingResultRenderingInformation) =>
+    renderingInfo.votingResultsSelector.find('.voters');
+
+function voterInitials(voter: IMember) {
+    const initials = (name: string) =>
+        name.split(' ').map((element) => element.charAt(0).toUpperCase()).slice(0, 3).join('');
+
+    if (voter.fullName) {
+        return initials(voter.fullName)
+    }
+    if (voter.username) {
+        return initials(voter.username)
+    }
+    return 'U';
+}
 
 function voterInformations(voter: IMember) {
-    const voterIcon = $('<div />').attr('class', 'tile-icon').append(
-        $('<img>', {src: voter.avatar, 'class': 'voter-icon'})
-    );
+    let voterIcon;
+
+    if (voter.avatar) {
+        voterIcon = $('<div />').attr('class', 'tile-icon').append(
+            $('<img>', {src: voter.avatar, 'class': 'voter-icon'})
+        );
+    } else {
+        voterIcon = $('<div />').attr('class', 'voter-without-icon tile-icon').text(voterInitials(voter))
+    }
 
     const voterName = $('<div />').attr('class', 'tile-content').append(
         $('<div />').attr('class', 'tile-title').text(voter.fullName || voter.username || '')
     );
 
-    return $('<div />').attr('class', 'tile tile-centered')
+    return $('<div />').attr('class', 'voter tile tile-centered')
         .append(voterIcon)
         .append(voterName);
 }
@@ -57,45 +77,57 @@ function renderVoters(result: IVotingResultRenderingInformation) {
     if (! result.voteAnonymously) {
         const votesWithNames = result.voters.filter(voter => (voter.fullName !== undefined || voter.username !== undefined));
 
-        if (votesWithNames.length) {
-            result.votesSelector.attr('class', 'expandable');
-        }
+        // todo: remove me later; just to create some more votes
+        let duplicated = votesWithNames.map(function(item) {
+            return [item, item, item];
+        }).reduce(function(a, b) { return a.concat(b) });
 
-        votesWithNames.forEach(voter => result.votersSelector.append(voterInformations(voter)));
+        const voters = votersElement(result);
+
+        duplicated.forEach(voter => voters.append(voterInformations(voter)));
+
+        if (votesWithNames.length > 0 && hideVotersElement(result).hasClass('hidden')) {
+            showVotersElement(result).removeClass('hidden');
+        }
     }
 }
 
 function renderResult(result: IVotingResultRenderingInformation) {
     // clear old voters
-    result.votersSelector.empty();
+    votersElement(result).empty();
 
     if (result.voters.length) {
-        result.votersCountSelector.text(result.voters.length);
-        result.votingIconSelector.css('background-image', votingResultIcon(result.votingTypeIcon));
-        result.votingResultSelector.addClass('visible');
-        result.votingResultSelector.removeClass('hidden');
-        result.votingResultHeaderSelector.addClass('visible');
-        result.votingResultHeaderSelector.removeClass('hidden');
+        result.votingResultsSelector.find('.voters-count').text(result.voters.length);
+        result.votingResultsSelector.find('.voting-result-icon').css('background-image', votingResultIcon(result.votingTypeIcon));
+        result.votingResultsSelector.removeClass('hidden');
 
         renderVoters(result);
     } else {
         // hide empty up voters in result
-        result.votingResultSelector.addClass('hidden');
-        result.votingResultSelector.removeClass('visible');
-        result.votingResultHeaderSelector.addClass('hidden');
-        result.votingResultHeaderSelector.removeClass('visible');
+        result.votingResultsSelector.addClass('hidden');
     }
 }
 
-upVotingRendering.votesSelector.click(function () {
-    toggle(upVotingRendering.votersSelector);
-});
+function showVoters(renderingInfo: IVotingResultRenderingInformation) {
+    showVotersElement(renderingInfo).addClass('hidden');
+    hideVotersElement(renderingInfo).removeClass('hidden');
+    toggle(votersElement(renderingInfo));
+}
 
-downVotingRendering.votesSelector.click(function () {
-    toggle(downVotingRendering.votersSelector);
-});
+function hideVoters(renderingInfo: IVotingResultRenderingInformation) {
+    hideVotersElement(renderingInfo).addClass('hidden');
+    showVotersElement(renderingInfo).removeClass('hidden');
+    toggle(votersElement(renderingInfo));
+}
 
-t.render(() => {
+function registerClickListeners() {
+    hideVotersElement(upVotingRendering).click(() => hideVoters(upVotingRendering));
+    showVotersElement(upVotingRendering).click(() => showVoters(upVotingRendering));
+    hideVotersElement(downVotingRendering).click(() => hideVoters(downVotingRendering));
+    showVotersElement(downVotingRendering).click(() => showVoters(downVotingRendering));
+}
+
+function renderVotingResults(t) {
     getVotingResults(t)
         .then((results) => {
             if (results) {
@@ -108,5 +140,12 @@ t.render(() => {
                 renderResult(downVotingRendering);
             }
         })
-        .then(() => t.sizeTo('#votingResults'));
+        .then(resize);
+}
+
+registerClickListeners();
+
+t.render(() => {
+    renderVotingResults(t);
+    console.log('results');
 });
