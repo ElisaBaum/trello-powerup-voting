@@ -10360,12 +10360,8 @@ function voterInformations(voter) {
 function renderVoters(result) {
     if (!result.voteAnonymously) {
         var votesWithNames = result.voters.filter(function (voter) { return (voter.fullName !== undefined || voter.username !== undefined); });
-        // todo: remove me later; just to create some more votes
-        var duplicated = votesWithNames.map(function (item) {
-            return [item, item, item];
-        }).reduce(function (a, b) { return a.concat(b); });
         var voters_1 = votersElement(result);
-        duplicated.forEach(function (voter) { return voters_1.append(voterInformations(voter)); });
+        votesWithNames.forEach(function (voter) { return voters_1.append(voterInformations(voter)); });
         if (votesWithNames.length > 0 && hideVotersElement(result).hasClass('hidden')) {
             showVotersElement(result).removeClass('hidden');
         }

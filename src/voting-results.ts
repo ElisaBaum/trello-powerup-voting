@@ -76,15 +76,9 @@ function voterInformations(voter: IMember) {
 function renderVoters(result: IVotingResultRenderingInformation) {
     if (! result.voteAnonymously) {
         const votesWithNames = result.voters.filter(voter => (voter.fullName !== undefined || voter.username !== undefined));
-
-        // todo: remove me later; just to create some more votes
-        let duplicated = votesWithNames.map(function(item) {
-            return [item, item, item];
-        }).reduce(function(a, b) { return a.concat(b) });
-
         const voters = votersElement(result);
 
-        duplicated.forEach(voter => voters.append(voterInformations(voter)));
+        votesWithNames.forEach(voter => voters.append(voterInformations(voter)));
 
         if (votesWithNames.length > 0 && hideVotersElement(result).hasClass('hidden')) {
             showVotersElement(result).removeClass('hidden');
