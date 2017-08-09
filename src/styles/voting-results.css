@@ -62,15 +62,16 @@
     border: none;
 }
 
-.show-voters, .hide-voters {
+.toggle-voters {
     text-decoration: underline;
     border-radius: 3px;
     color: #8c8c8c;
     margin: 2px 0;
     padding: 6px 8px;
+    cursor: pointer;
 }
 
-.show-voters:hover, .hide-voters:hover {
+.toggle-voters:hover {
     background: #D6DADC;
     color: #4d4d4d;
 }

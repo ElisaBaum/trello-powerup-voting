@@ -31,11 +31,8 @@ const resize = () => t.sizeTo('#votingResults');
 
 const toggle = (element: JQuery) => element.slideToggle(0, resize);
 
-const showVotersElement = (renderingInfo: IVotingResultRenderingInformation) =>
-    renderingInfo.votingResultsSelector.find('.show-voters');
-
-const hideVotersElement = (renderingInfo: IVotingResultRenderingInformation) =>
-    renderingInfo.votingResultsSelector.find('.hide-voters');
+const toggleVotersElement = (renderingInfo: IVotingResultRenderingInformation) =>
+    renderingInfo.votingResultsSelector.find('.toggle-voters');
 
 const votersElement = (renderingInfo: IVotingResultRenderingInformation) =>
     renderingInfo.votingResultsSelector.find('.voters');
@@ -80,8 +77,8 @@ function renderVoters(result: IVotingResultRenderingInformation) {
 
         votesWithNames.forEach(voter => voters.append(voterInformations(voter)));
 
-        if (votesWithNames.length > 0 && hideVotersElement(result).hasClass('hidden')) {
-            showVotersElement(result).removeClass('hidden');
+        if (votesWithNames.length > 0) {
+            toggleVotersElement(result).removeClass('hidden');
         }
     }
 }
@@ -102,23 +99,17 @@ function renderResult(result: IVotingResultRenderingInformation) {
     }
 }
 
-function showVoters(renderingInfo: IVotingResultRenderingInformation) {
-    showVotersElement(renderingInfo).addClass('hidden');
-    hideVotersElement(renderingInfo).removeClass('hidden');
-    toggle(votersElement(renderingInfo));
-}
+function toggleVoters(renderingInfo: IVotingResultRenderingInformation) {
+    const element = votersElement(renderingInfo);
+    toggle(element);
 
-function hideVoters(renderingInfo: IVotingResultRenderingInformation) {
-    hideVotersElement(renderingInfo).addClass('hidden');
-    showVotersElement(renderingInfo).removeClass('hidden');
-    toggle(votersElement(renderingInfo));
+    const toggleText = element.is(':visible') ? 'Hide voters' : 'Show voters';
+    toggleVotersElement(renderingInfo).text(toggleText);
 }
 
 function registerClickListeners() {
-    hideVotersElement(upVotingRendering).click(() => hideVoters(upVotingRendering));
-    showVotersElement(upVotingRendering).click(() => showVoters(upVotingRendering));
-    hideVotersElement(downVotingRendering).click(() => hideVoters(downVotingRendering));
-    showVotersElement(downVotingRendering).click(() => showVoters(downVotingRendering));
+    toggleVotersElement(upVotingRendering).click(() => toggleVoters(upVotingRendering));
+    toggleVotersElement(downVotingRendering).click(() => toggleVoters(downVotingRendering));
 }
 
 function renderVotingResults(t) {
