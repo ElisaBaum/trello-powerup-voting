@@ -10320,7 +10320,7 @@ var downVotingRendering = {
     votingResultsSelector: $('#downVotingResults'),
     votingTypeIcon: thumbs_down_white_svg_1.default
 };
-var votingResultIcon = function (image) { return 'url("' + asset_service_1.cleanupPath(image) + '")'; };
+var votingResultIcon = function (image) { return 'url("' + asset_service_1.cleanupImgPath(image) + '")'; };
 var resize = function () { return t.sizeTo('#votingResults'); };
 var toggle = function (element) { return element.slideToggle(0, resize); };
 var showVotersElement = function (renderingInfo) {
@@ -10414,7 +10414,6 @@ function renderVotingResults(t) {
 registerClickListeners();
 t.render(function () {
     renderVotingResults(t);
-    console.log('results');
 });
 //# sourceMappingURL=voting-results.js.map
 });
@@ -10587,6 +10586,10 @@ ___scope___.file("services/asset-service.js", function(exports, require, module,
 
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+function cleanupImgPath(path) {
+    return '.' + path;
+}
+exports.cleanupImgPath = cleanupImgPath;
 function cleanupPath(path) {
     return './' + path;
 }

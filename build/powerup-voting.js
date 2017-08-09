@@ -10304,7 +10304,6 @@ var bagde_service_1 = require("./services/bagde-service");
 var button_service_1 = require("./services/button-service");
 var trello_powerups_1 = require("trello-powerups");
 var attachment_service_1 = require("./services/attachment-service");
-var asset_service_1 = require("./services/asset-service");
 var settings_html_1 = require("./views/settings.html");
 trello_powerups_1.initialize({
     'card-buttons': function (t, options) {
@@ -10319,7 +10318,7 @@ trello_powerups_1.initialize({
     'show-settings': function (t, options) {
         return t.popup({
             title: 'Settings',
-            url: asset_service_1.cleanupPath(settings_html_1.default)
+            url: settings_html_1.default
         });
     }
 });
@@ -10336,7 +10335,7 @@ var thumbs_down_white_svg_1 = require("../images/thumbs_down_white.svg");
 var asset_service_1 = require("./asset-service");
 var badgeColor = function (votingType) { return votingType === VotingType_1.VotingType.UP ? 'green' : 'red'; };
 var badgeTitle = function (votingType) { return votingType === VotingType_1.VotingType.UP ? 'Ups' : 'Downs'; };
-var badgeIcon = function (votingType) { return votingType == VotingType_1.VotingType.UP ? asset_service_1.cleanupPath(thumbs_up_white_svg_1.default) : asset_service_1.cleanupPath(thumbs_down_white_svg_1.default); };
+var badgeIcon = function (votingType) { return asset_service_1.cleanupImgPath(votingType == VotingType_1.VotingType.UP ? thumbs_up_white_svg_1.default : thumbs_down_white_svg_1.default); };
 function createBadge(votes, votingType) {
     var numberOfVotes = votes.filter(vote_service_1.votingTypeFilter(votingType)).length;
     if (numberOfVotes) {
@@ -10533,6 +10532,10 @@ ___scope___.file("services/asset-service.js", function(exports, require, module,
 
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+function cleanupImgPath(path) {
+    return '.' + path;
+}
+exports.cleanupImgPath = cleanupImgPath;
 function cleanupPath(path) {
     return './' + path;
 }
@@ -10551,22 +10554,22 @@ var trash_svg_1 = require("../images/trash.svg");
 var asset_service_1 = require("./asset-service");
 var attachment_service_1 = require("./attachment-service");
 var voteUpButton = {
-    icon: asset_service_1.cleanupPath(thumbs_up_svg_1.default),
-    text: 'Vote UP',
+    icon: asset_service_1.cleanupImgPath(thumbs_up_svg_1.default),
+    text: 'Vote up',
     callback: function (t) {
         vote_service_1.vote(t, VotingType_1.VotingType.UP).then(t.closePopup());
     }
 };
 var voteDownButton = {
-    icon: asset_service_1.cleanupPath(thumbs_down_svg_1.default),
+    icon: asset_service_1.cleanupImgPath(thumbs_down_svg_1.default),
     // hacky workaround to sort in correct order
-    text: '\u200B' + 'Vote DOWN',
+    text: '\u200B' + 'Vote down',
     callback: function (t) {
         vote_service_1.vote(t, VotingType_1.VotingType.DOWN).then(t.closePopup());
     }
 };
 var deleteVoteButton = {
-    icon: asset_service_1.cleanupPath(trash_svg_1.default),
+    icon: asset_service_1.cleanupImgPath(trash_svg_1.default),
     // hacky workaround to sort in correct order
     text: '\u2063' + 'Delete vote',
     callback: function (t) {
@@ -10627,7 +10630,7 @@ function getAttachmentSections(t, options) {
         if (votes) {
             var claimed = options.entries.filter(function (attachment) { return attachment.url.includes(resultsAttachment.url); });
             return [{
-                    icon: asset_service_1.cleanupPath(thumbs_up_svg_1.default),
+                    icon: asset_service_1.cleanupImgPath(thumbs_up_svg_1.default),
                     title: resultsAttachment.name,
                     claimed: claimed,
                     content: {

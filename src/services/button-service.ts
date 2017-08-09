@@ -3,29 +3,29 @@ import {VotingType} from "../enums/VotingType";
 import thumbsUpImg from '../images/thumbs_up.svg';
 import thumbsDownImg from "../images/thumbs_down.svg";
 import trashImg from "../images/trash.svg";
-import {cleanupPath} from "./asset-service";
+import {cleanupImgPath} from "./asset-service";
 import {IButton} from "../interfaces/IButton";
 import {attachResults} from "./attachment-service";
 
 const voteUpButton: IButton = {
-    icon: cleanupPath(thumbsUpImg),
-    text: 'Vote UP',
+    icon: cleanupImgPath(thumbsUpImg),
+    text: 'Vote up',
     callback(t) {
         vote(t, VotingType.UP).then(t.closePopup());
     }
 };
 
 const voteDownButton: IButton = {
-    icon: cleanupPath(thumbsDownImg),
+    icon: cleanupImgPath(thumbsDownImg),
     // hacky workaround to sort in correct order
-    text: '\u200B' + 'Vote DOWN',
+    text: '\u200B' + 'Vote down',
     callback(t) {
         vote(t, VotingType.DOWN).then(t.closePopup());
     }
 };
 
 const deleteVoteButton: IButton = {
-    icon: cleanupPath(trashImg),
+    icon: cleanupImgPath(trashImg),
     // hacky workaround to sort in correct order
     text: '\u2063' + 'Delete vote',
     callback(t) {
