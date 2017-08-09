@@ -3,7 +3,7 @@ import {iframe} from "trello-powerups";
 import {IMember} from "./interfaces/IMember";
 import thumbsUpImg from './images/thumbs_up_white.svg';
 import thumbsDownImg from './images/thumbs_down_white.svg';
-import {cleanupPath} from "./services/asset-service";
+import {cleanupImgPath} from "./services/asset-service";
 import {IVotingResultRenderingInformation} from "./interfaces/IVotingResultRenderingInformation";
 
 import "spectre.css/dist/spectre.min.css";
@@ -25,7 +25,7 @@ const downVotingRendering: IVotingResultRenderingInformation = {
     votingTypeIcon: thumbsDownImg
 };
 
-const votingResultIcon = (image) => 'url("' + cleanupPath(image) + '")';
+const votingResultIcon = (image) => 'url("' + cleanupImgPath(image) + '")';
 
 const resize = () => t.sizeTo('#votingResults');
 
@@ -141,5 +141,4 @@ registerClickListeners();
 
 t.render(() => {
     renderVotingResults(t);
-    console.log('results');
 });
