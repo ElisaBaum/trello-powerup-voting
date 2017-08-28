@@ -70,32 +70,36 @@ function voterInformations(voter: IMember) {
         .append(voterName);
 }
 
-function renderVoters(result: IVotingResultRenderingInformation) {
-    if (! result.voteAnonymously) {
-        const votesWithNames = result.voters.filter(voter => (voter.fullName !== undefined || voter.username !== undefined));
-        const voters = votersElement(result);
+function renderVoters(renderingInfo: IVotingResultRenderingInformation) {
+    const votesWithNames = renderingInfo.voters.filter(voter => (voter.fullName !== undefined || voter.username !== undefined));
+    const voters = votersElement(renderingInfo);
 
-        votesWithNames.forEach(voter => voters.append(voterInformations(voter)));
+    votesWithNames.forEach(voter => voters.append(voterInformations(voter)));
 
-        if (votesWithNames.length > 0) {
-            toggleVotersElement(result).removeClass('hidden');
-        }
+    if (votesWithNames.length > 0) {
+        toggleVotersElement(renderingInfo).removeClass('hidden');
     }
 }
 
-function renderResult(result: IVotingResultRenderingInformation) {
+function renderResult(renderingInfo: IVotingResultRenderingInformation) {
     // clear old voters
-    votersElement(result).empty();
+    votersElement(renderingInfo).empty();
 
-    if (result.voters.length) {
-        result.votingResultsSelector.find('.voters-count').text(result.voters.length);
-        result.votingResultsSelector.find('.voting-result-icon').css('background-image', votingResultIcon(result.votingTypeIcon));
-        result.votingResultsSelector.removeClass('hidden');
+    if (renderingInfo.voters.length) {
+        renderingInfo.votingResultsSelector.find('.voters-count').text(renderingInfo.voters.length);
+        renderingInfo.votingResultsSelector.find('.voting-result-icon').css('background-image', votingResultIcon(renderingInfo.votingTypeIcon));
+        renderingInfo.votingResultsSelector.removeClass('hidden');
 
-        renderVoters(result);
+
+        if (renderingInfo.voteAnonymously) {
+            renderingInfo.votingResultsSelector.addClass('column-default');
+        }
+        else {
+            renderVoters(renderingInfo);
+        }
     } else {
         // hide empty up voters in result
-        result.votingResultsSelector.addClass('hidden');
+        renderingInfo.votingResultsSelector.addClass('hidden');
     }
 }
 
